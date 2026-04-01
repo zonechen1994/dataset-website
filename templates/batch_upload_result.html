@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}批量上传结果{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3><i class="fas fa-check-circle"></i> 批量上传结果</h3>
+                        {% if target_category %}
+                        <div class="badge bg-light text-dark">
+                            <i class="fas fa-tag"></i> 目标类别：{{ target_category_name }}
+                        </div>
+                        {% else %}
+                        <div class="badge bg-light text-dark">
+                            <i class="fas fa-robot"></i> 自动识别模式
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 统计信息 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white text-center">
+                                <div class="card-body">
+                                    <h2>{{ success_count or (results | selectattr('status', 'equalto', 'success') | list | length) }}</h2>
+                                    <p class="mb-0">成功上传</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white text-center">
+                                <div class="card-body">
+                                    <h2>{{ error_count or (results | selectattr('status', 'equalto', 'error') | list | length) }}</h2>
+                                    <p class="mb-0">上传失败</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-dark text-center">
+                                <div class="card-body">
+                                    <h2>{{ results | selectattr('category_changed', 'equalto', true) | list | length }}</h2>
+                                    <p class="mb-0">类别覆盖</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white text-center">
+                                <div class="card-body">
+                                    <h2>{{ total_count or (results | length) }}</h2>
+                                    <p class="mb-0">文件总数</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if target_category %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> 分类上传说明</h6>
+                        <p class="mb-0">
+                            本次上传指定了目标类别 <strong>{{ target_category_name }}</strong>，
+                            所有成功解析的数据集都已自动归类到此类别下。
+                            {% set category_changed_count = results | selectattr('category_changed', 'equalto', true) | list | length %}
+                            {% if category_changed_count > 0 %}
+                            其中 <strong>{{ category_changed_count }}</strong> 个文件的原始类别被覆盖。
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <!-- 详细结果 -->
+                    <h5>详细结果</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>文件名</th>
+                                    <th>状态</th>
+                                    <th>数据集名称</th>
+                                    <th>器官类型</th>
+                                    <th>数据模态</th>
+                                    {% if target_category %}<th>类别变更</th>{% endif %}
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-alt"></i>
+                                        {{ result.filename }}
+                                    </td>
+                                    <td>
+                                        {% if result.status == 'success' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> 成功
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times"></i> 失败
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.status == 'success' %}
+                                            <strong>{{ result.dataset_name }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.status == 'success' %}
+                                            <span class="badge bg-primary">{{ result.organ_category }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.status == 'success' %}
+                                            <span class="badge bg-secondary">{{ result.modality }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if target_category %}
+                                    <td>
+                                        {% if result.status == 'success' %}
+                                            {% if result.category_changed %}
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-exchange-alt"></i> 已覆盖
+                                                </span>
+                                                <br><small class="text-muted">原：{{ result.original_category or '未识别' }}</small>
+                                            {% else %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> 无变更
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                    <td>
+                                        {% if result.status == 'success' %}
+                                            <a href="{{ url_for('dataset_detail', dataset_id=result.dataset_id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> 查看
+                                            </a>
+                                        {% else %}
+                                            <span class="text-danger small">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                {{ result.error }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="mt-4 d-flex gap-2">
+                        <a href="{{ url_for('batch_upload_markdown') }}" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> 继续批量上传
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-success">
+                            <i class="fas fa-home"></i> 查看所有数据集
+                        </a>
+                        <a href="{{ url_for('upload_markdown') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-file-upload"></i> 单文件上传
+                        </a>
+                    </div>
+
+                    <!-- 成功上传的数据集快速预览 -->
+                    {% set successful_results = results | selectattr('status', 'equalto', 'success') | list %}
+                    {% if successful_results | length > 0 %}
+                    <hr class="my-4">
+                    <h5>成功上传的数据集预览</h5>
+                    <div class="row">
+                        {% for result in successful_results[:6] %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ result.dataset_name }}</h6>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <span class="badge bg-primary">{{ result.organ_category }}</span>
+                                            <span class="badge bg-secondary">{{ result.modality }}</span>
+                                        </small>
+                                    </p>
+                                    <a href="{{ url_for('dataset_detail', dataset_id=result.dataset_id) }}" 
+                                       class="btn btn-sm btn-outline-primary">查看详情</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if successful_results | length > 6 %}
+                    <p class="text-center">
+                        <a href="{{ url_for('index') }}" class="btn btn-link">
+                            查看所有 {{ successful_results | length }} 个数据集 →
+                        </a>
+                    </p>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

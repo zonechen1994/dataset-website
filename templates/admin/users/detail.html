@@ -1,0 +1,464 @@
+{% extends "admin/base.html" %}
+
+{% block title %}用户详情 - {{ user.username }} - 管理后台{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-user"></i> 
+        用户详情 - {{ user.username }}
+        {% if user.username == 'admin' %}
+            <i class="fas fa-crown text-warning ms-1" title="超级管理员"></i>
+        {% endif %}
+    </h2>
+    <div class="btn-group">
+        <a href="{{ url_for('user_admin.edit_user', user_id=user.id) }}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> 编辑用户
+        </a>
+        <a href="{{ url_for('user_admin.list_users') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回列表
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- 基本信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-id-card"></i> 基本信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>用户ID：</strong></td>
+                                <td>{{ user.id }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>用户名：</strong></td>
+                                <td>{{ user.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>姓名：</strong></td>
+                                <td>{{ user.full_name or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>邮箱：</strong></td>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>角色：</strong></td>
+                                <td>
+                                    {% if user.role == 'admin' %}
+                                        <span class="badge bg-danger">管理员</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">普通用户</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>账户状态：</strong></td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if user.is_active else 'secondary' }}">
+                                        {{ '激活' if user.is_active else '已禁用' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>注册时间：</strong></td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>最后登录：</strong></td>
+                                <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else '从未登录' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>知识星球权限：</strong></td>
+                                <td>
+                                    {% if user.is_planet_user %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-star"></i> 已授权
+                                        </span>
+                                        {% if user.planet_approved_at %}
+                                        <br><small class="text-muted">获得时间：{{ user.planet_approved_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">无权限</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 知识星球权限管理 -->
+        {% if user.username != 'admin' %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-star text-warning"></i> 知识星球权限管理
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>当前状态</h6>
+                        {% if user.is_planet_user %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                该用户已拥有知识星球权限，可以下载所有数据集。
+                                {% if user.planet_approved_at %}
+                                <br><small>获得时间：{{ user.planet_approved_at.strftime('%Y年%m月%d日 %H:%M') }}</small>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                该用户目前没有知识星球权限，无法下载需要权限的数据集。
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if user.is_planet_user %}
+                            <button type="button" 
+                                    class="btn btn-danger"
+                                    onclick="revokePlanetAccessFromDetail({{ user.id }}, '{{ user.username }}')">
+                                <i class="fas fa-star-half-alt"></i> 收回权限
+                            </button>
+                        {% else %}
+                            <a href="{{ url_for('planet.admin_list_applications') }}" class="btn btn-info">
+                                <i class="fas fa-eye"></i> 查看申请记录
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 操作记录（示例） -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> 最近活动
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <i class="fas fa-user text-primary"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>用户注册</h6>
+                            <p class="text-muted mb-0">
+                                用户在 {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else '-' }} 注册账户
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if user.last_login %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <i class="fas fa-sign-in-alt text-success"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>最后登录</h6>
+                            <p class="text-muted mb-0">
+                                {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.updated_at and user.updated_at != user.created_at %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <i class="fas fa-edit text-warning"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>信息更新</h6>
+                            <p class="text-muted mb-0">
+                                用户信息在 {{ user.updated_at.strftime('%Y-%m-%d %H:%M:%S') }} 更新
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- 快捷操作 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt"></i> 快捷操作
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('user_admin.edit_user', user_id=user.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> 编辑用户
+                    </a>
+                    
+                    {% if user.username != 'admin' %}
+                    <button type="button" 
+                            class="btn btn-warning"
+                            onclick="resetPassword()">
+                        <i class="fas fa-key"></i> 重置密码
+                    </button>
+                    
+                    <button type="button" 
+                            class="btn btn-{{ 'secondary' if user.is_active else 'success' }}"
+                            onclick="toggleUserStatus({{ user.id }}, {{ user.is_active|tojson }})">
+                        <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                        {{ '禁用账户' if user.is_active else '激活账户' }}
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-danger dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown">
+                            <i class="fas fa-trash"></i> 危险操作
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item text-danger" 
+                                   href="#" 
+                                   onclick="deleteUser({{ user.id }}, '{{ user.username }}')">
+                                    <i class="fas fa-trash"></i> 删除用户
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户统计 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> 账户统计
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ (user.updated_at - user.created_at).days if user.updated_at and user.created_at else 0 }}</h4>
+                            <small class="text-muted">使用天数</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-{{ 'success' if user.last_login else 'muted' }}">
+                            {{ '活跃' if user.last_login and user.is_active else '非活跃' }}
+                        </h4>
+                        <small class="text-muted">账户状态</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.username != 'admin' %}
+<!-- 重置密码模态框 -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="resetPasswordForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">重置密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>为用户 <strong>{{ user.username }}</strong> 设置新密码：</p>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">新密码</label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="newPassword" 
+                               name="new_password"
+                               required
+                               minlength="6"
+                               placeholder="至少6个字符">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning">重置密码</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// 切换用户状态
+function toggleUserStatus(userId, currentStatus) {
+    const action = currentStatus ? '禁用' : '激活';
+    
+    if (!confirm(`确定要${action}用户 "{{ user.username }}" 吗？`)) {
+        return;
+    }
+    
+    fetch('{{ url_for("user_admin.toggle_user_status", user_id=user.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('操作失败：' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('操作失败');
+        console.error('Error:', error);
+    });
+}
+
+// 从用户详情页收回知识星球权限
+function revokePlanetAccessFromDetail(userId, username) {
+    if (!confirm(`确定要收回用户"${username}"的知识星球权限吗？\n\n收回后该用户将无法下载需要知识星球权限的数据集。`)) {
+        return;
+    }
+    
+    fetch('{{ url_for("user_admin.revoke_planet_access", user_id=user.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            // 收回权限成功后跳转到用户列表页面
+            setTimeout(() => {
+                window.location.href = '{{ url_for("user_admin.list_users") }}';
+            }, 1500); // 1.5秒后跳转，让用户看到成功消息
+        } else {
+            alert('收回权限失败：' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('收回权限失败');
+        console.error('Error:', error);
+    });
+}
+
+// 重置密码
+function resetPassword() {
+    document.getElementById('newPassword').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    modal.show();
+}
+
+// 删除用户
+function deleteUser(userId, username) {
+    if (!confirm(`确定要删除用户 "${username}" 吗？此操作不可撤销！`)) {
+        return;
+    }
+    
+    if (!confirm('再次确认：确定要删除此用户吗？')) {
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("user_admin.delete_user", user_id=user.id) }}';
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// 处理重置密码表单提交
+document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const newPassword = document.getElementById('newPassword').value;
+    const formData = new FormData();
+    formData.append('new_password', newPassword);
+    
+    fetch('{{ url_for("user_admin.reset_password", user_id=user.id) }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+        } else {
+            alert('重置失败：' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('重置失败');
+        console.error('Error:', error);
+    });
+});
+</script>
+{% endif %}
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -19px;
+    top: 30px;
+    height: calc(100% - 10px);
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 24px;
+    height: 24px;
+    background-color: #fff;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.timeline-content h6 {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

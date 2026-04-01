@@ -1,0 +1,126 @@
+{% extends "admin/base.html" %}
+
+{% block title %}邮件测试 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 侧边栏 -->
+        <div class="col-md-2">
+            {% include 'admin/sidebar.html' %}
+        </div>
+        
+        <!-- 主要内容 -->
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-envelope-open-text"></i> 邮件测试</h1>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-paper-plane"></i> 发送测试邮件</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                <div class="mb-3">
+                                    <label for="recipient" class="form-label">收件人邮箱</label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="recipient" 
+                                           name="recipient" 
+                                           placeholder="请输入测试邮箱地址"
+                                           required>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle text-info"></i>
+                                        将向该邮箱发送一封测试邮件，用于验证邮件服务是否正常工作
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane"></i> 发送测试邮件
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <!-- 邮件配置信息 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-cogs"></i> 邮件配置信息</h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <td><strong>SMTP服务器:</strong></td>
+                                        <td>{{ config.MAIL_SERVER }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>端口:</strong></td>
+                                        <td>{{ config.MAIL_PORT }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>TLS加密:</strong></td>
+                                        <td>
+                                            {% if config.MAIL_USE_TLS %}
+                                                <span class="badge bg-success">启用</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">禁用</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>发件人:</strong></td>
+                                        <td>{{ config.MAIL_DEFAULT_SENDER }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>管理员邮箱:</strong></td>
+                                        <td>
+                                            {% for email in config.ADMIN_EMAILS %}
+                                                <div class="small">{{ email }}</div>
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 使用说明 -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-question-circle"></i> 使用说明</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled small">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success"></i>
+                                    测试邮件会立即发送（同步）
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-clock text-info"></i>
+                                    申请通知邮件异步发送
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-shield-alt text-warning"></i>
+                                    邮件发送失败不影响申请流程
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-envelope text-primary"></i>
+                                    支持HTML和纯文本格式
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

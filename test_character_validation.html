@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符验证测试</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">字符计数验证测试</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="testForm">
+                            <!-- 申请理由 -->
+                            <div class="mb-3">
+                                <label for="reason" class="form-label">申请理由 <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="reason" name="reason" rows="4" 
+                                        placeholder="请简要说明您申请知识星球权限的理由（至少10个字符）" 
+                                        minlength="10" required></textarea>
+                                <div class="form-text">
+                                    <span>请详细说明您的研究方向或使用目的，有助于加快审核进度</span>
+                                    <span class="float-end">
+                                        <span id="charCount">0</span>/10 字符
+                                        <span id="charStatus" class="ms-2"></span>
+                                    </span>
+                                </div>
+                                <div class="invalid-feedback">
+                                    申请理由至少需要10个字符
+                                </div>
+                            </div>
+
+                            <!-- 文件上传 -->
+                            <div class="mb-3">
+                                <label for="screenshot" class="form-label">知识星球购买截图 <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="screenshot" name="screenshot" 
+                                       accept="image/*" required>
+                            </div>
+
+                            <!-- 提交按钮 -->
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-paper-plane"></i>
+                                提交申请
+                            </button>
+                        </form>
+                        
+                        <div class="mt-3">
+                            <h6>测试步骤:</h6>
+                            <ol>
+                                <li>在文本框中输入少于10个字符，观察字符计数和按钮状态</li>
+                                <li>继续输入直到达到10个字符，观察实时变化</li>
+                                <li>上传一个文件，观察按钮状态变化</li>
+                                <li>删除一些文字，观察验证状态的实时更新</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const screenshotInput = document.getElementById('screenshot');
+        const form = document.getElementById('testForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const reasonInput = document.getElementById('reason');
+        const charCount = document.getElementById('charCount');
+        const charStatus = document.getElementById('charStatus');
+
+        // 实时字符计数
+        function updateCharCount() {
+            const count = reasonInput.value.trim().length;
+            charCount.textContent = count;
+            
+            console.log('Character count updated:', count); // Debug log
+            
+            // 更新字符计数颜色和样式
+            if (count >= 10) {
+                charCount.className = 'text-success fw-bold';
+                charStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+                reasonInput.classList.remove('is-invalid');
+                reasonInput.classList.add('is-valid');
+            } else {
+                charCount.className = 'text-danger';
+                if (count === 0) {
+                    charStatus.innerHTML = '';
+                } else {
+                    charStatus.innerHTML = '<i class="fas fa-exclamation-circle text-warning"></i>';
+                }
+                reasonInput.classList.remove('is-valid');
+                if (count > 0) {
+                    reasonInput.classList.add('is-invalid');
+                } else {
+                    reasonInput.classList.remove('is-invalid');
+                }
+            }
+            
+            // 更新按钮状态
+            const hasValidReason = count >= 10;
+            const hasValidFile = screenshotInput.files.length > 0;
+            const isFormValid = hasValidReason && hasValidFile;
+            
+            submitBtn.disabled = !isFormValid;
+            
+            if (isFormValid) {
+                submitBtn.classList.remove('btn-secondary');
+                submitBtn.classList.add('btn-primary');
+            } else {
+                submitBtn.classList.remove('btn-primary');
+                submitBtn.classList.add('btn-secondary');
+            }
+            
+            console.log('Form validation:', {
+                hasValidReason,
+                hasValidFile,
+                isFormValid,
+                buttonDisabled: submitBtn.disabled
+            }); // Debug log
+        }
+
+        // 绑定所有相关事件 - 包括更多事件类型以确保实时响应
+        reasonInput.addEventListener('input', updateCharCount);
+        reasonInput.addEventListener('keyup', updateCharCount);
+        reasonInput.addEventListener('keydown', function() {
+            // 延迟执行以确保字符已经输入到文本框
+            setTimeout(updateCharCount, 1);
+        });
+        reasonInput.addEventListener('paste', function() {
+            setTimeout(updateCharCount, 1);
+        });
+        reasonInput.addEventListener('cut', function() {
+            setTimeout(updateCharCount, 1);
+        });
+        reasonInput.addEventListener('propertychange', updateCharCount); // IE支持
+        reasonInput.addEventListener('textInput', updateCharCount); // 文本输入事件
+
+        // 初始化字符计数
+        updateCharCount();
+
+        // 文件上传变化时更新按钮状态
+        screenshotInput.addEventListener('change', updateCharCount);
+
+        // 表单提交处理
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const reason = reasonInput.value.trim();
+            const screenshot = screenshotInput.files[0];
+            
+            alert(`测试成功！\n理由长度: ${reason.length}\n文件: ${screenshot ? screenshot.name : '无'}`);
+        });
+    });
+    </script>
+</body>
+</html>

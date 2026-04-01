@@ -1,0 +1,149 @@
+{% extends "base_simple.html" %}
+
+{% block title %}个人资料 - 数据集管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user"></i> 个人资料
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>用户名：</strong></td>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>姓名：</strong></td>
+                                    <td>{{ user.full_name or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>邮箱：</strong></td>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>角色：</strong></td>
+                                    <td>
+                                        {% if user.role == 'admin' %}
+                                            <span class="badge bg-danger">管理员</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">普通用户</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>账户状态：</strong></td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">激活</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">已禁用</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>注册时间：</strong></td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>最后登录：</strong></td>
+                                    <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>更新时间：</strong></td>
+                                    <td>{{ user.updated_at.strftime('%Y-%m-%d %H:%M') if user.updated_at else '-' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> 编辑资料
+                        </a>
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-warning">
+                            <i class="fas fa-key"></i> 修改密码
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- 快捷操作 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt"></i> 快捷操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-home"></i> 返回首页
+                        </a>
+                        
+                        {% if is_admin %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-cogs"></i> 管理后台
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-sign-out-alt"></i> 退出登录
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计信息（如果是管理员） -->
+            {% if is_admin %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i> 系统统计
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <i class="fas fa-database text-primary"></i> 
+                        数据集总数：<strong id="dataset-count">-</strong>
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-users text-info"></i> 
+                        用户总数：<strong id="user-count">-</strong>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if is_admin %}
+<script>
+// 加载统计信息
+fetch('/api/stats')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('dataset-count').textContent = data.datasets || 0;
+        document.getElementById('user-count').textContent = data.users || 0;
+    })
+    .catch(error => {
+        console.error('加载统计信息失败:', error);
+    });
+</script>
+{% endif %}
+{% endblock %}

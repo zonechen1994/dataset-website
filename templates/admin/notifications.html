@@ -1,0 +1,525 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}消息通知{% endblock %}
+
+{% block admin_content %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-bell"></i> 消息通知</h2>
+                <div>
+                    <span class="badge bg-danger fs-6">{{ unread_count }} 条未读</span>
+                </div>
+            </div>
+
+            <!-- 筛选器 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="{{ url_for('planet.admin_notifications') }}" 
+                               class="btn {% if not request.args.get('unread') %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                <i class="fas fa-list"></i> 全部通知
+                            </a>
+                            <a href="{{ url_for('planet.admin_notifications', unread=1) }}" 
+                               class="btn {% if request.args.get('unread') %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                <i class="fas fa-exclamation-circle"></i> 未读通知 ({{ unread_count }})
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-success" onclick="markAllAsRead()">
+                                <i class="fas fa-check-double"></i> 全部标记为已读
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>通知列表</h5>
+                </div>
+                <div class="card-body">
+                    {% if notifications.items %}
+                    <div class="list-group">
+                        {% for notification in notifications.items %}
+                        <div class="list-group-item {% if not notification.is_read %}list-group-item-warning border-warning{% endif %}"
+                             id="notification-{{ notification.id }}"
+                             onclick="handleNotificationClick({{ notification.id }}, '{{ notification.type }}', {{ notification.related_id or 'null' }}, {{ 'false' if notification.is_read else 'true' }})"
+                             style="cursor: pointer;">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        {% if notification.type == 'application_submitted' %}
+                                        <i class="fas fa-paper-plane text-primary me-2"></i>
+                                        {% elif notification.type == 'application_approved' %}
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        {% elif notification.type == 'application_rejected' %}
+                                        <i class="fas fa-times-circle text-danger me-2"></i>
+                                        {% else %}
+                                        <i class="fas fa-bell text-info me-2"></i>
+                                        {% endif %}
+                                        
+                                        <h6 class="mb-0 {% if not notification.is_read %}fw-bold{% endif %}">
+                                            {{ notification.title }}
+                                        </h6>
+                                        
+                                        {% if not notification.is_read %}
+                                        <span class="badge bg-warning text-dark ms-2">新</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <p class="mb-2 {% if not notification.is_read %}fw-bold{% endif %}">
+                                        {{ notification.content }}
+                                    </p>
+                                    
+                                    <div class="d-flex align-items-center text-muted">
+                                        <small>
+                                            <i class="fas fa-clock"></i>
+                                            {{ notification.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                                        </small>
+                                        {% if notification.sender %}
+                                        <small class="ms-3">
+                                            <i class="fas fa-user"></i>
+                                            来自：{{ notification.sender.username }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex flex-column align-items-end">
+                                    {% if not notification.is_read %}
+                                    <button class="btn btn-sm btn-outline-success mb-2" 
+                                            onclick="markAsRead({{ notification.id }})">
+                                        <i class="fas fa-check"></i> 标记已读
+                                    </button>
+                                    {% endif %}
+                                    
+                                    {% if notification.related_id and notification.type.startswith('application_') %}
+                                    <button class="btn btn-sm btn-primary" 
+                                            onclick="viewApplication({{ notification.related_id }})">
+                                        <i class="fas fa-eye"></i> 查看申请
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- 分页 -->
+                    {% if notifications.pages > 1 %}
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if notifications.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('planet.admin_notifications', page=notifications.prev_num, unread=request.args.get('unread')) }}">上一页</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in notifications.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != notifications.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('planet.admin_notifications', page=page_num, unread=request.args.get('unread')) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if notifications.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('planet.admin_notifications', page=notifications.next_num, unread=request.args.get('unread')) }}">下一页</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">
+                            {% if request.args.get('unread') %}
+                            暂无未读通知
+                            {% else %}
+                            暂无通知记录
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+<!-- 申请详情模态框 -->
+<div class="modal fade" id="applicationDetailModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">申请详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="closeApplicationModal()"></button>
+            </div>
+            <div class="modal-body" id="applicationDetailContent">
+                <!-- 内容将通过AJAX加载 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图片预览模态框 -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">购买截图</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="购买截图" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 确保模态框正确的层级关系 */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+}
+
+/* 图片模态框的特殊样式 */
+#imageModal {
+    z-index: 1070 !important;
+}
+
+#imageModal .modal-backdrop {
+    z-index: 1065 !important;
+}
+
+/* 确保申请详情模态框的正确样式 */
+#applicationDetailModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* 防止模态框嵌套时的滚动问题 */
+.modal-open {
+    padding-right: 0 !important;
+}
+</style>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`/planet/api/notifications/${notificationId}/read`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 更新UI
+            const notificationElement = document.getElementById(`notification-${notificationId}`);
+            notificationElement.classList.remove('list-group-item-warning', 'border-warning');
+            
+            // 移除"新"标记
+            const newBadge = notificationElement.querySelector('.badge.bg-warning');
+            if (newBadge) newBadge.remove();
+            
+            // 移除加粗样式
+            const boldElements = notificationElement.querySelectorAll('.fw-bold');
+            boldElements.forEach(el => el.classList.remove('fw-bold'));
+            
+            // 移除"标记已读"按钮
+            const markReadBtn = notificationElement.querySelector('.btn-outline-success');
+            if (markReadBtn) markReadBtn.remove();
+            
+            // 更新未读计数
+            updateUnreadCount();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('操作失败');
+    });
+}
+
+function markAllAsRead() {
+    const unreadNotifications = document.querySelectorAll('.list-group-item-warning');
+    
+    if (unreadNotifications.length === 0) {
+        alert('没有未读通知');
+        return;
+    }
+    
+    if (!confirm(`确定要将所有 ${unreadNotifications.length} 条未读通知标记为已读吗？`)) {
+        return;
+    }
+    
+    // 批量标记已读
+    fetch('/planet/api/notifications/mark-all-read', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 更新所有未读通知的UI
+            unreadNotifications.forEach(notification => {
+                notification.classList.remove('list-group-item-warning', 'border-warning');
+                
+                // 移除"新"标记
+                const newBadge = notification.querySelector('.badge.bg-warning');
+                if (newBadge) newBadge.remove();
+                
+                // 移除加粗样式
+                const boldElements = notification.querySelectorAll('.fw-bold');
+                boldElements.forEach(el => el.classList.remove('fw-bold'));
+                
+                // 移除"标记已读"按钮
+                const markReadBtn = notification.querySelector('.btn-outline-success');
+                if (markReadBtn) markReadBtn.remove();
+            });
+            
+            // 更新未读计数
+            updateUnreadCount();
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('批量标记失败');
+    });
+}
+
+function updateUnreadCount() {
+    fetch('/planet/api/notifications/unread-count')
+        .then(response => response.json())
+        .then(data => {
+            // 更新页面标题区域的未读计数
+            const titleBadge = document.querySelector('.card-header .badge.bg-danger');
+            if (titleBadge) {
+                if (data.count > 0) {
+                    titleBadge.textContent = `${data.count} 条未读`;
+                    titleBadge.style.display = 'inline';
+                } else {
+                    titleBadge.style.display = 'none';
+                }
+            }
+            
+            // 更新未读通知按钮的计数
+            const unreadBtn = document.querySelector('a[href*="unread=1"] .fas + text()');
+            const unreadBtnParent = document.querySelector('a[href*="unread=1"]');
+            if (unreadBtnParent) {
+                const btnText = unreadBtnParent.innerHTML;
+                unreadBtnParent.innerHTML = btnText.replace(/\(\d+\)/, `(${data.count})`);
+            }
+            
+            // 更新导航栏中的通知计数（如果存在）
+            const navBadges = document.querySelectorAll('.navbar .badge.bg-danger, .sidebar .badge.bg-danger');
+            navBadges.forEach(badge => {
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+            
+            // 如果没有未读消息且当前在查看未读页面，刷新到全部通知页面
+            if (data.count === 0 && window.location.search.includes('unread=1')) {
+                setTimeout(() => {
+                    window.location.href = '/planet/admin/notifications';
+                }, 1500);
+            }
+        })
+        .catch(error => console.error('Error updating count:', error));
+}
+
+function handleNotificationClick(notificationId, type, relatedId, isUnread) {
+    // 如果是未读通知，先标记为已读
+    if (isUnread) {
+        markAsRead(notificationId);
+    }
+    
+    // 处理不同类型的通知点击
+    if (type === 'application_submitted' && relatedId) {
+        // 延迟一下，让标记已读请求先执行
+        setTimeout(() => {
+            viewApplication(relatedId);
+        }, 200);
+    }
+}
+
+function viewApplication(applicationId) {
+    // 确保没有其他模态框打开
+    const existingModals = document.querySelectorAll('.modal.show');
+    existingModals.forEach(modal => {
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) modalInstance.hide();
+    });
+    
+    fetch(`/planet/admin/applications/${applicationId}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('applicationDetailContent').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('applicationDetailModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('加载申请详情失败');
+        });
+}
+
+// 关闭申请模态框
+function closeApplicationModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('applicationDetailModal'));
+    if (modal) {
+        modal.hide();
+    }
+    // 清理内容
+    document.getElementById('applicationDetailContent').innerHTML = '';
+}
+
+// 打开图片预览模态框
+function openImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'), {
+        backdrop: true,
+        keyboard: true
+    });
+    
+    // 确保图片模态框的z-index比申请模态框高
+    const imageModalEl = document.getElementById('imageModal');
+    imageModalEl.style.zIndex = '1070'; // Bootstrap默认模态框z-index是1050，这里设置更高
+    
+    imageModal.show();
+    
+    // 当图片模态框显示后，调整backdrop的z-index
+    imageModalEl.addEventListener('shown.bs.modal', function() {
+        const backdrop = document.querySelector('.modal-backdrop:last-child');
+        if (backdrop) {
+            backdrop.style.zIndex = '1065';
+        }
+    }, { once: true });
+}
+
+// 审核申请
+function reviewApplication(applicationId, action) {
+    const isApprove = action === 'approve';
+    const message = isApprove ? '确定要通过这个申请吗？' : '确定要拒绝这个申请吗？';
+    
+    if (!confirm(message)) {
+        return;
+    }
+    
+    let comment = '';
+    if (!isApprove) {
+        comment = prompt('请输入拒绝理由：');
+        if (comment === null) return; // 用户取消
+    }
+    
+    const data = {
+        action: action
+    };
+    
+    if (comment) {
+        data.comment = comment;
+    }
+    
+    fetch(`/planet/admin/applications/${applicationId}/review`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message);
+            // 关闭模态框并刷新页面
+            closeApplicationModal();
+            location.reload();
+        } else {
+            alert(result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('操作失败');
+    });
+}
+
+// 自动标记可见的未读通知为已读（页面停留5秒后）
+function autoMarkVisibleAsRead() {
+    const unreadNotifications = document.querySelectorAll('.list-group-item-warning');
+    
+    if (unreadNotifications.length === 0) return;
+    
+    // 检查哪些通知在视口中可见
+    const visibleUnread = Array.from(unreadNotifications).filter(notification => {
+        const rect = notification.getBoundingClientRect();
+        return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+    });
+    
+    if (visibleUnread.length > 0) {
+        console.log(`发现 ${visibleUnread.length} 条可见的未读通知，将在5秒后自动标记为已读`);
+        
+        visibleUnread.forEach(notification => {
+            const notificationId = notification.id.replace('notification-', '');
+            // 延迟5秒标记，给用户足够时间阅读
+            setTimeout(() => {
+                // 再次检查通知是否仍然未读（可能用户已手动标记）
+                if (notification.classList.contains('list-group-item-warning')) {
+                    markAsRead(parseInt(notificationId));
+                }
+            }, 5000);
+        });
+    }
+}
+
+// 页面加载完成后启动自动标记
+document.addEventListener('DOMContentLoaded', function() {
+    // 延迟2秒后开始检查，让页面完全加载
+    setTimeout(autoMarkVisibleAsRead, 2000);
+    
+    // 添加模态框事件监听器
+    const applicationModal = document.getElementById('applicationDetailModal');
+    const imageModal = document.getElementById('imageModal');
+    
+    // 申请详情模态框关闭时清理内容
+    applicationModal.addEventListener('hidden.bs.modal', function () {
+        document.getElementById('applicationDetailContent').innerHTML = '';
+        // 确保没有其他模态框处于打开状态
+        document.body.classList.remove('modal-open');
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+    });
+    
+    // 图片模态框关闭时清理
+    imageModal.addEventListener('hidden.bs.modal', function () {
+        document.getElementById('modalImage').src = '';
+    });
+});
+
+// 自动刷新通知（每60秒）
+setInterval(() => {
+    if (document.visibilityState === 'visible') {
+        updateUnreadCount();
+    }
+}, 60000);
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}任务类型管理 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 admin-sidebar-column">
+            {% include 'admin/sidebar.html' %}
+        </div>
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tasks"></i> 任务类型管理</h2>
+                <a href="{{ url_for('admin_new_task_type') }}" class="btn btn-warning">
+                    <i class="fas fa-plus"></i> 添加新任务类型
+                </a>
+            </div>
+            
+            {% if task_types %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>代码</th>
+                                    <th>名称</th>
+                                    <th>描述</th>
+                                    <th>使用情况</th>
+                                    <th width="200">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task_type in task_types %}
+                                <tr>
+                                    <td>
+                                        <code class="bg-light px-2 py-1 rounded">{{ task_type.code }}</code>
+                                    </td>
+                                    <td>
+                                        <strong>{{ task_type.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ task_type.description or '-' }}</span>
+                                    </td>
+                                    <td>
+                                        {% set count = datasets|selectattr('task_type', 'equalto', task_type.code)|list|length if datasets else 0 %}
+                                        {% if count > 0 %}
+                                            <span class="badge bg-warning">{{ count }} 个数据集</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">未使用</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin_edit_task_type', task_type_id=task_type.id) }}" 
+                                               class="btn btn-outline-warning">
+                                                <i class="fas fa-edit"></i> 编辑
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger"
+                                                    onclick="confirmDelete('{{ task_type.name }}', '{{ url_for('admin_delete_task_type', task_type_id=task_type.id) }}')">
+                                                <i class="fas fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                <h4>暂无任务类型</h4>
+                <p class="text-muted">点击上方按钮添加第一个任务类型</p>
+                <a href="{{ url_for('admin_new_task_type') }}" class="btn btn-warning">
+                    <i class="fas fa-plus"></i> 添加新任务类型
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除任务类型 "<span id="deleteItemName"></span>" 吗？</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>注意：</strong>如果有数据集使用此任务类型，将无法删除。
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> 确认删除
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('deleteForm').action = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

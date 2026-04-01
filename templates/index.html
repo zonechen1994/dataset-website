@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}数据集列表 - 数据集展示网站{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <!-- 筛选面板 -->
+        <div class="filters-section">
+            <h5><i class="fas fa-filter"></i> 筛选条件</h5>
+            <form method="GET" action="{{ url_for('index') }}">
+                <!-- 搜索框 -->
+                <div class="mb-3 position-relative">
+                    <label class="form-label">关键字搜索</label>
+                    <input type="text" class="form-control" name="search" 
+                           value="{{ current_filters.search }}" placeholder="搜索数据集名称或描述">
+                    <span class="shortcut-hint">Ctrl+K</span>
+                </div>
+                
+                <!-- 器官分类 -->
+                <div class="mb-3">
+                    <label class="form-label">器官分类</label>
+                    <select class="form-select" name="organ_category">
+                        <option value="">全部分类</option>
+                        {% for category in categories %}
+                        <option value="{{ category.code }}" 
+                                {% if current_filters.organ_category == category.code %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- 模态类型 -->
+                <div class="mb-3">
+                    <label class="form-label">模态类型</label>
+                    <select class="form-select" name="modality">
+                        <option value="">全部模态</option>
+                        {% for modality in modalities %}
+                        <option value="{{ modality.code }}" 
+                                {% if current_filters.modality == modality.code %}selected{% endif %}>
+                            {{ modality.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- 任务类型 -->
+                <div class="mb-3">
+                    <label class="form-label">任务类型</label>
+                    <select class="form-select" name="task_type">
+                        <option value="">全部任务</option>
+                        {% for task_type in task_types %}
+                        <option value="{{ task_type.code }}" 
+                                {% if current_filters.task_type == task_type.code %}selected{% endif %}>
+                            {{ task_type.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> 筛选
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> 清除
+                </a>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <!-- 数据集列表 -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>数据集列表</h4>
+            <div class="d-flex align-items-center">
+                {% if is_admin %}
+                <a href="{{ url_for('admin_datasets') }}" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="fas fa-cog"></i> 管理数据集
+                </a>
+                {% endif %}
+                <span class="text-muted">共找到 {{ datasets.total }} 个数据集</span>
+            </div>
+        </div>
+        
+        {% if datasets.items %}
+        <div class="dataset-grid">
+            {% for dataset in datasets.items %}
+            <div class="dataset-card card">
+                <!-- 数据集图片 -->
+                <div class="dataset-image-container">
+                    {% if dataset.visualization_images %}
+                        {% set images = dataset.visualization_images | from_json %}
+                        {% if images and images|length > 0 %}
+                            <img src="{{ images[0].url }}" 
+                                 alt="{{ images[0].alt or dataset.name }}"
+                                 loading="lazy"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="img-placeholder" style="display: none;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                            {% if images|length > 1 %}
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <span class="badge bg-dark bg-opacity-75">
+                                    <i class="fas fa-images"></i> {{ images|length }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-image fa-3x text-muted"></i>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    <!-- 标题 -->
+                    <div class="dataset-title">
+                        <h6 class="card-title mb-0">
+                            <a href="{{ url_for('dataset_detail', dataset_id=dataset.id) }}" 
+                               class="text-decoration-none">
+                                {{ dataset.name }}
+                            </a>
+                        </h6>
+                    </div>
+                    
+                    <!-- 标签和元信息 -->
+                    <div class="dataset-meta-section">
+                        <!-- 分类标签 -->
+                        {% if dataset.organ_category %}
+                        <div>
+                            <span class="badge bg-primary">
+                                {% for category in categories %}
+                                    {% if category.code == dataset.organ_category %}
+                                        {{ category.name }}
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 数据集元信息 -->
+                        <div class="dataset-meta-info small text-muted mt-2">
+                            {% if dataset.dimension %}
+                            <div><i class="fas fa-cube text-primary me-1"></i> {{ dataset.dimension }}</div>
+                            {% endif %}
+                            {% if dataset.modality %}
+                                {% for modality in modalities %}
+                                    {% if modality.code == dataset.modality %}
+                                        <div><i class="fas fa-camera text-success me-1"></i> {{ modality.name }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            {% if dataset.task_type %}
+                                {% for task_type in task_types %}
+                                    {% if task_type.code == dataset.task_type %}
+                                        <div><i class="fas fa-tasks text-info me-1"></i> {{ task_type.name }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- 描述 -->
+                    <div class="dataset-description">
+                        <p class="card-text small text-muted mb-0">
+                            {{ dataset.description[:120] if dataset.description else '暂无描述' }}{% if dataset.description and dataset.description|length > 120 %}...{% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- 统计信息 -->
+                    <div class="dataset-stats">
+                        <div class="stats-grid">
+                            <div class="row g-2">
+                                <div class="col-4 text-center">
+                                    <small class="text-muted d-block">类别数</small>
+                                    <strong class="text-primary">{{ dataset.num_classes or '-' }}</strong>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <small class="text-muted d-block">数据量</small>
+                                    <strong class="text-success">{{ dataset.data_volume or '-' }}</strong>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <small class="text-muted d-block">发布年份</small>
+                                    <strong class="text-info">{{ dataset.publication_date or '-' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dataset-actions card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('dataset_detail', dataset_id=dataset.id) }}" 
+                           class="btn btn-sm btn-primary flex-grow-1 me-2">
+                            <i class="fas fa-eye"></i> 查看详情
+                        </a>
+                        
+                        <!-- 知识星球权限显示 -->
+                        {% if current_user and current_user.is_authenticated %}
+                            {% if current_user.is_planet_user or is_admin %}
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle"></i> 可下载
+                                </small>
+                            {% else %}
+                                <small class="text-warning">
+                                    <i class="fas fa-star"></i> 需要知识星球权限
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            <small class="text-muted">
+                                <i class="fas fa-lock"></i> 需要登录
+                            </small>
+                        {% endif %}
+                        
+                        {% if is_admin %}
+                        <a href="{{ url_for('admin_datasets') }}" 
+                           class="btn btn-sm btn-outline-secondary ms-2" title="管理数据集">
+                            <i class="fas fa-cog"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 分页 -->
+        {% if datasets.pages > 1 %}
+        <nav aria-label="数据集分页">
+            <ul class="pagination justify-content-center">
+                {% if datasets.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=datasets.prev_num, **current_filters) }}">上一页</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in datasets.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != datasets.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('index', page=page_num, **current_filters) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if datasets.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=datasets.next_num, **current_filters) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h5>没有找到匹配的数据集</h5>
+            <p>请尝试调整筛选条件{% if is_admin %}或<a href="{{ url_for('admin_dashboard') }}">管理数据集</a>{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

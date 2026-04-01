@@ -1,0 +1,463 @@
+{% extends "admin/base.html" %}
+
+{% block title %}用户管理 - 管理后台{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-users"></i> 用户管理</h2>
+    <a href="{{ url_for('user_admin.create_user') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> 新建用户
+    </a>
+</div>
+
+<!-- 搜索和筛选 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">搜索</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}"
+                    placeholder="用户名、邮箱或姓名">
+            </div>
+            <div class="col-md-2">
+                <label for="role" class="form-label">角色</label>
+                <select class="form-select" id="role" name="role">
+                    <option value="">全部</option>
+                    <option value="admin" {{ 'selected' if role_filter=='admin' }}>管理员</option>
+                    <option value="user" {{ 'selected' if role_filter=='user' }}>普通用户</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">状态</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">全部</option>
+                    <option value="active" {{ 'selected' if status_filter=='active' }}>激活</option>
+                    <option value="inactive" {{ 'selected' if status_filter=='inactive' }}>已禁用</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="planet" class="form-label">知识星球</label>
+                <select class="form-select" id="planet" name="planet">
+                    <option value="">全部</option>
+                    <option value="has_access" {{ 'selected' if planet_filter=='has_access' }}>有权限</option>
+                    <option value="no_access" {{ 'selected' if planet_filter=='no_access' }}>无权限</option>
+                    <option value="expiring_soon" {{ 'selected' if planet_filter=='expiring_soon' }}>即将到期(7天)</option>
+                    <option value="expired" {{ 'selected' if planet_filter=='expired' }}>已到期</option>
+                    <option value="permanent" {{ 'selected' if planet_filter=='permanent' }}>永久会员</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+                <a href="{{ url_for('user_admin.list_users') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> 清空
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 用户列表 -->
+<div class="card">
+    <div class="card-body">
+        {% if users.items %}
+        <div class="table-responsive">
+            <table class="table table-hover table-compact">
+                <thead>
+                    <tr>
+                        <th class="col-id">ID</th>
+                        <th class="col-username">用户名</th>
+                        <th class="col-fullname">姓名</th>
+                        <th class="col-email">邮箱</th>
+                        <th class="col-role">角色</th>
+                        <th class="col-status">状态</th>
+                        <th class="col-planet">知识星球</th>
+                        <th class="col-created">注册时间</th>
+                        <th class="col-login">最后登录</th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users.items %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>
+                            <strong>{{ user.username }}</strong>
+                            {% if user.username == 'admin' %}
+                            <i class="fas fa-crown text-warning ms-1" title="超级管理员"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.full_name or '-' }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.role == 'admin' %}
+                            <span class="badge bg-danger">管理员</span>
+                            {% else %}
+                            <span class="badge bg-primary">普通用户</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if user.is_active else 'secondary' }}">
+                                {{ '激活' if user.is_active else '已禁用' }}
+                            </span>
+                        </td>
+                        <td class="col-planet">
+                            <div class="planet-info">
+                                {% if user.is_planet_user %}
+                                {% set now = None %}
+                                {% if user.planet_expiry_date %}
+                                {# 计算到期状态 #}
+                                {% set days_until_expiry = (user.planet_expiry_date.replace(tzinfo=None) - now if now
+                                else 999) %}
+                                {% if user.planet_expiry_date.replace(tzinfo=None) < (now or user.planet_expiry_date) %}
+                                    <span class="badge bg-danger"><i class="fas fa-star"></i> 已到期</span>
+                                    <small class="planet-expiry expired">{{ user.planet_expiry_date.strftime('%Y-%m-%d')
+                                        }}</small>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-star"></i> 已授权</span>
+                                    <small class="planet-expiry">到期: {{ user.planet_expiry_date.strftime('%Y-%m-%d')
+                                        }}</small>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-info text-dark"><i class="fas fa-star"></i> 已授权</span>
+                                    <small class="planet-expiry permanent">永久</small>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-secondary">无权限</span>
+                                    {% endif %}
+                            </div>
+                        </td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+                        <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '-' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('user_admin.view_user', user_id=user.id) }}"
+                                    class="btn btn-outline-info" title="查看详情">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('user_admin.edit_user', user_id=user.id) }}"
+                                    class="btn btn-outline-primary" title="编辑用户">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                {% if user.username != 'admin' %}
+                                <button type="button" class="btn btn-outline-warning" title="切换状态"
+                                    onclick="toggleUserStatus({{ user.id }}, {{ user.is_active|tojson }})">
+                                    <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                                </button>
+
+                                {% if user.is_planet_user %}
+                                <button type="button" class="btn btn-outline-danger" title="收回知识星球权限"
+                                    onclick="revokePlanetAccess({{ user.id }}, '{{ user.username }}')">
+                                    <i class="fas fa-star-half-alt"></i>
+                                </button>
+                                {% endif %}
+
+                                <button type="button" class="btn btn-outline-secondary" title="重置密码"
+                                    onclick="resetPassword({{ user.id }}, '{{ user.username }}')">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页 -->
+        {% if users.pages > 1 %}
+        <nav aria-label="用户列表分页">
+            <ul class="pagination">
+                {% for page_num in users.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                {% if page_num != users.page %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('user_admin.list_users', page=page_num, search=search, role=role_filter, status=status_filter, planet=planet_filter) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">暂无用户</h5>
+            <p class="text-muted">
+                {% if search or role_filter or status_filter %}
+                没有符合条件的用户
+                {% else %}
+                还没有注册的用户
+                {% endif %}
+            </p>
+            <a href="{{ url_for('user_admin.create_user') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 新建用户
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 重置密码模态框 -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="resetPasswordForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">重置密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>为用户 <strong id="resetUsername"></strong> 设置新密码：</p>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword" name="new_password" required
+                            minlength="6" placeholder="至少6个字符">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning">重置密码</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentUserId = null;
+
+    // 切换用户状态
+    function toggleUserStatus(userId, currentStatus) {
+        const action = currentStatus ? '禁用' : '激活';
+
+        if (!confirm(`确定要${action}此用户吗？`)) {
+            return;
+        }
+
+        fetch(`{{ url_for('user_admin.toggle_user_status', user_id=0) }}`.replace('0', userId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('操作失败', 'error');
+                console.error('Error:', error);
+            });
+    }
+
+    // 收回知识星球权限
+    function revokePlanetAccess(userId, username) {
+        if (!confirm(`确定要收回用户"${username}"的知识星球权限吗？\n\n收回后该用户将无法下载需要知识星球权限的数据集。`)) {
+            return;
+        }
+
+        fetch(`{{ url_for('user_admin.revoke_planet_access', user_id=0) }}`.replace('0', userId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('收回权限失败', 'error');
+                console.error('Error:', error);
+            });
+    }
+
+    // 重置密码
+    function resetPassword(userId, username) {
+        currentUserId = userId;
+        document.getElementById('resetUsername').textContent = username;
+        document.getElementById('newPassword').value = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+        modal.show();
+    }
+
+    // 处理重置密码表单提交
+    document.getElementById('resetPasswordForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const newPassword = document.getElementById('newPassword').value;
+        const formData = new FormData();
+        formData.append('new_password', newPassword);
+
+        fetch(`{{ url_for('user_admin.reset_password', user_id=0) }}`.replace('0', currentUserId), {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('重置失败', 'error');
+                console.error('Error:', error);
+            });
+    });
+
+    // 显示提示信息
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.insertBefore(alertDiv, document.body.firstChild);
+
+        // 3秒后自动关闭
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+</script>
+
+<style>
+    /* 用户列表表格优化 */
+    .table-compact {
+        font-size: 0.9rem;
+    }
+
+    .table-compact th,
+    .table-compact td {
+        padding: 0.4rem 0.3rem;
+        vertical-align: middle;
+    }
+
+    /* 固定列宽 */
+    .col-id {
+        width: 50px;
+        max-width: 50px;
+    }
+
+    .col-username {
+        width: 100px;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .col-fullname {
+        width: 90px;
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .col-email {
+        width: 150px;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .col-role {
+        width: 80px;
+        max-width: 80px;
+        text-align: center;
+    }
+
+    .col-status {
+        width: 70px;
+        max-width: 70px;
+        text-align: center;
+    }
+
+    .col-planet {
+        width: 140px;
+        max-width: 140px;
+    }
+
+    .col-created {
+        width: 100px;
+        max-width: 100px;
+    }
+
+    .col-login {
+        width: 130px;
+        max-width: 130px;
+    }
+
+    .col-actions {
+        width: auto;
+        min-width: 180px;
+    }
+
+    /* hover显示完整内容 */
+    .col-username:hover,
+    .col-fullname:hover,
+    .col-email:hover {
+        overflow: visible;
+        white-space: normal;
+        word-break: break-all;
+    }
+
+    /* 知识星球列样式 */
+    .planet-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .planet-expiry {
+        font-size: 0.75rem;
+        color: #666;
+    }
+
+    .planet-expiry.expiring-soon {
+        color: #ff9800;
+        font-weight: bold;
+    }
+
+    .planet-expiry.expired {
+        color: #f44336;
+        font-weight: bold;
+    }
+
+    .planet-expiry.permanent {
+        color: #2196f3;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}批量上传数据集{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3><i class="fas fa-upload"></i> 批量上传数据集</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- 左侧：批量上传表单 -->
+                        <div class="col-md-6">
+                            <h5>批量上传MD文件</h5>
+                            <p class="text-muted">一次可上传多个MD文件，系统将自动解析并识别器官类型和数据模态。</p>
+                            
+                            <form method="POST" enctype="multipart/form-data" id="batchUploadForm">
+                                <div class="mb-3">
+                                    <label for="target_category" class="form-label">选择目标类别</label>
+                                    <select class="form-select" id="target_category" name="target_category">
+                                        <option value="">自动识别类别</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.code }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">
+                                        选择特定类别将强制所有文件归类到该类别，留空则由系统自动识别
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="files" class="form-label">选择MD文件</label>
+                                    <input type="file" 
+                                           class="form-control" 
+                                           id="files" 
+                                           name="files" 
+                                           multiple 
+                                           accept=".md"
+                                           required>
+                                    <div class="form-text">
+                                        支持.md格式文件，最大16MB，可同时选择多个文件
+                                    </div>
+                                </div>
+                                
+                                <div id="filePreview" class="mb-3" style="display: none;">
+                                    <h6>已选择的文件：</h6>
+                                    <div id="fileList" class="list-group"></div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <span id="fileCount">0</span> 个文件，总大小：<span id="totalSize">0 MB</span>
+                                            <span id="categoryPreview" class="ms-2"></span>
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                        <i class="fas fa-upload"></i> 批量上传并解析
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-2 d-flex justify-content-between">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearFiles()">
+                                        <i class="fas fa-times"></i> 清除文件
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="validateFiles()" id="validateBtn">
+                                        <i class="fas fa-check-circle"></i> 验证文件
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- 右侧：说明信息 -->
+                        <div class="col-md-6">
+                            <h5>批量上传模式</h5>
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-layer-group"></i> 分类上传</h6>
+                                <p>选择上传模式：</p>
+                                <ul class="mb-0">
+                                    <li><strong>指定类别</strong>：所有文件统一归类到选定的器官类别</li>
+                                    <li><strong>自动识别</strong>：系统智能分析文件内容自动分类</li>
+                                    <li><strong>混合模式</strong>：可以同时处理不同类别的文件</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle"></i> 注意事项</h6>
+                                <ul class="mb-0 small">
+                                    <li>指定类别模式下，所有文件的organ_category字段将被覆盖</li>
+                                    <li>文件名和路径信息仍会被保留用于其他字段识别</li>
+                                    <li>推荐同一批次上传相同类别的文件以提高准确性</li>
+                                    <li>支持拖拽上传：将MD文件直接拖到表单区域</li>
+                                </ul>
+                            </div>
+                            
+                            <h6>可选的器官类别</h6>
+                            <div class="row">
+                                {% for category in categories %}
+                                <div class="col-6 mb-1">
+                                    <small class="text-muted">
+                                        <i class="fas fa-tag text-primary"></i> {{ category.name }}
+                                    </small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <h6>支持的数据模态</h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                <span class="badge bg-secondary">医学影像</span>
+                                <span class="badge bg-secondary">CT</span>
+                                <span class="badge bg-secondary">MRI</span>
+                                <span class="badge bg-secondary">PET</span>
+                                <span class="badge bg-secondary">X光</span>
+                                <span class="badge bg-secondary">超声</span>
+                                <span class="badge bg-secondary">内窥镜</span>
+                                <span class="badge bg-secondary">病理学</span>
+                                <span class="badge bg-secondary">电子病历</span>
+                                <span class="badge bg-secondary">多模态</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h6>其他选项</h6>
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('upload_markdown') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-file-upload"></i> 单文件上传
+                                </a>
+                                <a href="{{ url_for('new_dataset') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-plus"></i> 手动添加数据集
+                                </a>
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-home"></i> 返回首页
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 文件选择和预览
+document.getElementById('files').addEventListener('change', updateFilePreview);
+document.getElementById('target_category').addEventListener('change', updateCategoryPreview);
+
+function updateFilePreview() {
+    const filePreview = document.getElementById('filePreview');
+    const fileList = document.getElementById('fileList');
+    const files = document.getElementById('files').files;
+    
+    if (files.length > 0) {
+        filePreview.style.display = 'block';
+        fileList.innerHTML = '';
+        
+        let totalSize = 0;
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileItem = document.createElement('div');
+            fileItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            totalSize += parseFloat(fileSize);
+            
+            // 尝试从文件名推断类别
+            let predictedCategory = '';
+            if (fileName.toLowerCase().includes('fubu') || fileName.toLowerCase().includes('abdomen')) {
+                predictedCategory = '<span class="badge bg-success ms-2">腹部</span>';
+            } else if (fileName.toLowerCase().includes('gutou') || fileName.toLowerCase().includes('bone')) {
+                predictedCategory = '<span class="badge bg-warning text-dark ms-2">骨头</span>';
+            } else if (fileName.toLowerCase().includes('neikuijing') || fileName.toLowerCase().includes('endoscop')) {
+                predictedCategory = '<span class="badge bg-info ms-2">内窥镜</span>';
+            } else if (fileName.toLowerCase().includes('quanshen') || fileName.toLowerCase().includes('whole')) {
+                predictedCategory = '<span class="badge bg-secondary ms-2">全身</span>';
+            }
+            
+            fileItem.innerHTML = `
+                <div>
+                    <i class="fas fa-file-alt text-primary me-2"></i>
+                    <strong>${fileName}</strong>
+                    <small class="text-muted">(${fileSize} MB)</small>
+                    ${predictedCategory}
+                </div>
+                <span class="badge bg-primary rounded-pill">MD</span>
+            `;
+            
+            fileList.appendChild(fileItem);
+        }
+        
+        // 更新文件统计信息
+        document.getElementById('fileCount').textContent = files.length;
+        document.getElementById('totalSize').textContent = totalSize.toFixed(2);
+        
+        updateCategoryPreview();
+    } else {
+        filePreview.style.display = 'none';
+    }
+}
+
+function updateCategoryPreview() {
+    const categorySelect = document.getElementById('target_category');
+    const categoryPreview = document.getElementById('categoryPreview');
+    
+    if (categorySelect.value) {
+        const selectedText = categorySelect.options[categorySelect.selectedIndex].text;
+        categoryPreview.innerHTML = `| 目标类别：<span class="badge bg-primary ms-1">${selectedText}</span>`;
+    } else {
+        categoryPreview.innerHTML = '| 模式：<span class="badge bg-secondary ms-1">自动识别</span>';
+    }
+}
+
+// 清除文件
+function clearFiles() {
+    document.getElementById('files').value = '';
+    document.getElementById('filePreview').style.display = 'none';
+    updateCategoryPreview();
+}
+
+// 验证文件
+function validateFiles() {
+    const files = document.getElementById('files').files;
+    const validateBtn = document.getElementById('validateBtn');
+    
+    if (files.length === 0) {
+        alert('请先选择文件');
+        return;
+    }
+    
+    validateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 验证中...';
+    validateBtn.disabled = true;
+    
+    let validFiles = 0;
+    let totalSize = 0;
+    let issues = [];
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileName = file.name;
+        const fileSize = file.size / 1024 / 1024; // MB
+        
+        // 验证文件扩展名
+        if (!fileName.toLowerCase().endsWith('.md')) {
+            issues.push(`${fileName}: 不是MD文件格式`);
+            continue;
+        }
+        
+        // 验证文件大小
+        if (fileSize > 16) {
+            issues.push(`${fileName}: 文件过大 (${fileSize.toFixed(2)}MB > 16MB)`);
+            continue;
+        }
+        
+        if (fileSize < 0.001) {
+            issues.push(`${fileName}: 文件过小，可能是空文件`);
+            continue;
+        }
+        
+        // 验证文件名格式
+        if (fileName.includes(' ')) {
+            issues.push(`${fileName}: 建议移除文件名中的空格`);
+        }
+        
+        validFiles++;
+        totalSize += fileSize;
+    }
+    
+    setTimeout(() => {
+        validateBtn.innerHTML = '<i class="fas fa-check-circle"></i> 验证文件';
+        validateBtn.disabled = false;
+        
+        if (issues.length > 0) {
+            let message = `验证完成：${validFiles}/${files.length} 个文件通过验证\n\n问题：\n`;
+            message += issues.join('\n');
+            alert(message);
+        } else {
+            alert(`✓ 验证通过！所有 ${files.length} 个文件格式正确，总大小 ${totalSize.toFixed(2)}MB`);
+        }
+    }, 1000);
+}
+
+// 增强文件拖拽支持
+const fileInput = document.getElementById('files');
+const formContainer = document.getElementById('batchUploadForm');
+
+// 拖拽事件处理
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    formContainer.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    formContainer.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    formContainer.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight() {
+    formContainer.style.backgroundColor = '#f8f9fa';
+    formContainer.style.border = '2px dashed #007bff';
+}
+
+function unhighlight() {
+    formContainer.style.backgroundColor = '';
+    formContainer.style.border = '';
+}
+
+formContainer.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    // 过滤出MD文件
+    const mdFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.md'));
+    
+    if (mdFiles.length > 0) {
+        // 创建新的FileList对象
+        const dataTransfer = new DataTransfer();
+        mdFiles.forEach(file => dataTransfer.items.add(file));
+        fileInput.files = dataTransfer.files;
+        
+        // 触发change事件
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        if (mdFiles.length < files.length) {
+            alert(`已过滤并选择了 ${mdFiles.length} 个MD文件（忽略 ${files.length - mdFiles.length} 个非MD文件）`);
+        }
+    } else {
+        alert('拖拽的文件中没有找到MD格式文件');
+    }
+}
+
+// 表单提交时显示进度
+document.getElementById('batchUploadForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在上传处理中...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

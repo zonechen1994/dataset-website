@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}{{ dataset.name }} - 数据集展示网站{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- 数据集基本信息 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">{{ dataset.name }}</h4>
+                {% if is_admin %}
+                <div>
+                    <a href="{{ url_for('edit_dataset', dataset_id=dataset.id) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                            data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if dataset.description %}
+                <p class="card-text">{{ dataset.description }}</p>
+                {% endif %}
+                
+                <!-- 器官分类标签 -->
+                {% if dataset.organ_category %}
+                <span class="badge bg-primary mb-3">
+                    {% if dataset.organ_category == 'fubu' %}腹部
+                    {% elif dataset.organ_category == 'gutou' %}骨头
+                    {% elif dataset.organ_category == 'neikuijing' %}内窥镜
+                    {% elif dataset.organ_category == 'quanshen' %}全身
+                    {% else %}{{ dataset.organ_category }}{% endif %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 可视化图片 -->
+        {% if dataset.visualization_images %}
+            {% set images = dataset.visualization_images | from_json %}
+            {% if images and images|length > 0 %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-images"></i> 可视化图片</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for image in images %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card">
+                                <img src="{{ image.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ image.alt or dataset.name }}"
+                                     style="height: 200px; object-fit: cover; cursor: pointer;"
+                                     loading="lazy"
+                                     onclick="showImageModal('{{ image.url }}', '{{ image.alt or dataset.name }}')"
+                                     onerror="this.parentElement.innerHTML='<div class=\'img-placeholder d-flex align-items-center justify-content-center\' style=\'height: 200px; background: #f8f9fa;\'><i class=\'fas fa-image fa-2x text-muted\'></i></div>'">
+                                {% if image.alt %}
+                                <div class="card-body p-2">
+                                    <small class="text-muted">{{ image.alt }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+        
+        <!-- 数据集元信息表格 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table"></i> 数据集元信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            {% if dataset.dimension %}
+                            <tr><td><strong>维度</strong></td><td>{{ dataset.dimension }}</td></tr>
+                            {% endif %}
+                            {% if dataset.modality %}
+                            <tr><td><strong>模态</strong></td><td>{{ dataset.modality }}</td></tr>
+                            {% endif %}
+                            {% if dataset.task_type %}
+                            <tr><td><strong>任务类型</strong></td><td>{{ dataset.task_type }}</td></tr>
+                            {% endif %}
+                            {% if dataset.anatomical_structure %}
+                            <tr><td><strong>解剖结构</strong></td><td>{{ dataset.anatomical_structure }}</td></tr>
+                            {% endif %}
+                            {% if dataset.anatomical_region %}
+                            <tr><td><strong>解剖区域</strong></td><td>{{ dataset.anatomical_region }}</td></tr>
+                            {% endif %}
+                            {% if dataset.num_classes %}
+                            <tr><td><strong>类别数</strong></td><td>{{ dataset.num_classes }}</td></tr>
+                            {% endif %}
+                            {% if dataset.data_volume %}
+                            <tr><td><strong>数据量</strong></td><td>{{ dataset.data_volume }}</td></tr>
+                            {% endif %}
+                            {% if dataset.file_format %}
+                            <tr><td><strong>文件格式</strong></td><td>{{ dataset.file_format }}</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 文件结构 -->
+        {% if dataset.file_structure %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-folder-tree"></i> 文件结构</h5>
+            </div>
+            <div class="card-body">
+                <pre class="bg-light p-3 rounded"><code>{{ dataset.file_structure }}</code></pre>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- 图像尺寸统计 -->
+        {% set image_stats = dataset.image_stats | from_json %}
+        {% if image_stats %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-ruler-combined"></i> 图像尺寸统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-borderless">
+                        <thead>
+                            <tr>
+                                <th>统计类型</th>
+                                {% if image_stats.get('min', {}).get('spacing') %}
+                                <th>间距 (mm)</th>
+                                {% endif %}
+                                <th>尺寸</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat_type in ['min', 'median', 'max'] %}
+                                {% if image_stats.get(stat_type) %}
+                                <tr>
+                                    <td>
+                                        {% if stat_type == 'min' %}
+                                            <span class="badge bg-info">最小值</span>
+                                        {% elif stat_type == 'median' %}
+                                            <span class="badge bg-success">中位值</span>
+                                        {% elif stat_type == 'max' %}
+                                            <span class="badge bg-warning">最大值</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if image_stats.get('min', {}).get('spacing') %}
+                                    <td><code>{{ image_stats[stat_type].get('spacing', 'N/A') }}</code></td>
+                                    {% endif %}
+                                    <td><code>{{ image_stats[stat_type].get('size', 'N/A') }}</code></td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- 引用信息 -->
+        {% if dataset.citation %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-quote-left"></i> 引用</h5>
+            </div>
+            <div class="card-body">
+                <pre class="bg-light p-3 rounded"><code>{{ dataset.citation }}</code></pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <!-- 来源信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-link"></i> 来源信息</h5>
+            </div>
+            <div class="card-body">
+                {% if dataset.official_website %}
+                <p><strong>官方网站：</strong><br>
+                {% if dataset.official_website.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.official_website }}</span>
+                {% else %}
+                    <a href="{{ dataset.official_website }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt"></i> 访问官网
+                    </a>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.download_link %}
+                <p><strong>下载链接：</strong><br>
+                {% if dataset.download_link.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.download_link }}</span>
+                {% else %}
+                    <!-- 普通下载链接 - 对所有用户开放 -->
+                    <div class="download-section">
+                        <a href="{{ url_for('download_dataset', dataset_id=dataset.id) }}" target="_blank" class="btn btn-sm btn-success">
+                            <i class="fas fa-download"></i> 下载数据
+                        </a>
+                        <div class="mt-1">
+                            <small class="text-success">
+                                <i class="fas fa-globe"></i> 公开下载，无需权限
+                            </small>
+                        </div>
+                    </div>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.baidu_pan_link %}
+                <p><strong>百度网盘：</strong><br>
+                {% if dataset.baidu_pan_link.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.baidu_pan_link }}</span>
+                {% else %}
+                    <!-- 百度网盘权限控制 -->
+                    <div class="baidu-pan-section">
+                        {% if current_user and (current_user.is_planet_user or is_admin) %}
+                            <!-- 知识星球用户或管理员可以访问百度网盘 -->
+                            <a href="{{ url_for('baidu_pan_dataset', dataset_id=dataset.id) }}" target="_blank" class="btn btn-sm btn-primary">
+                                <i class="fab fa-cloud"></i> 百度网盘下载
+                            </a>
+                            {% if dataset.baidu_pan_password %}
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>提取码：</strong>
+                                    <span class="badge bg-info" style="user-select: all;">{{ dataset.baidu_pan_password }}</span>
+                                    <button class="btn btn-sm btn-outline-secondary ms-1" 
+                                            onclick="copyToClipboard('{{ dataset.baidu_pan_password }}')" 
+                                            title="复制提取码">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </small>
+                            </div>
+                            {% endif %}
+                            {% if current_user.is_planet_user and not is_admin %}
+                            <div class="mt-1">
+                                <small class="text-success">
+                                    <i class="fas fa-star"></i> 知识星球用户权限
+                                </small>
+                            </div>
+                            {% endif %}
+                        {% elif current_user %}
+                            <!-- 已登录但不是知识星球用户 -->
+                            <button class="btn btn-sm btn-warning" onclick="showPlanetApplication()">
+                                <i class="fas fa-star"></i> 申请知识星球权限
+                            </button>
+                            <div class="mt-2">
+                                <small class="text-warning">
+                                    <i class="fas fa-star"></i> 百度网盘下载需要知识星球会员权限
+                                </small>
+                            </div>
+                            <!-- 显示隐藏的提取码提示 -->
+                            {% if dataset.baidu_pan_password %}
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    <i class="fas fa-lock"></i> 提取码：需要权限后可见
+                                </small>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <!-- 未登录用户 -->
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-sign-in-alt"></i> 登录后访问
+                            </a>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-star"></i> 需要登录并获得知识星球权限才能访问百度网盘
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.paper_link %}
+                <p><strong>相关论文：</strong><br>
+                {% if dataset.paper_link.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.paper_link }}</span>
+                {% else %}
+                    <a href="{{ dataset.paper_link }}" target="_blank" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-file-alt"></i> 查看论文
+                    </a>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.publication_date %}
+                <p><strong>发布日期：</strong> {{ dataset.publication_date }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 作者信息 -->
+        {% if dataset.authors %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users"></i> 作者及机构</h5>
+            </div>
+            <div class="card-body">
+                {% for author in dataset.authors %}
+                <div class="mb-2">
+                    <strong>{{ author.name }}</strong>
+                    {% if author.institution %}
+                    <br><small class="text-muted">{{ author.institution }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- 统计信息 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 统计信息</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>创建时间：</strong> {{ dataset.created_at.strftime('%Y-%m-%d %H:%M') if dataset.created_at else '未知' }}</p>
+                <p><strong>更新时间：</strong> {{ dataset.updated_at.strftime('%Y-%m-%d %H:%M') if dataset.updated_at else '未知' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+{% if is_admin %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除数据集 "<strong>{{ dataset.name }}</strong>" 吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form method="POST" action="{{ url_for('delete_dataset', dataset_id=dataset.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 图片查看模态框 -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">图片预览</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" alt="" style="max-height: 70vh;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <a id="imageDownloadBtn" href="" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt"></i> 查看原图
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showImageModal(imageUrl, imageAlt) {
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('imageModalLabel');
+    const downloadBtn = document.getElementById('imageDownloadBtn');
+    
+    modalImage.src = imageUrl;
+    modalImage.alt = imageAlt;
+    modalTitle.textContent = imageAlt || '图片预览';
+    downloadBtn.href = imageUrl;
+    
+    modal.show();
+}
+
+function showPlanetApplication() {
+    // 检查是否有待审核的申请
+    fetch('/planet/status')
+        .then(response => response.text())
+        .then(html => {
+            // 检查是否有待审核申请（简单检查）
+            if (html.includes('待审核')) {
+                alert('您已提交申请，正在审核中，请耐心等待。');
+                window.location.href = '/planet/status';
+            } else {
+                window.location.href = '/planet/apply';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            window.location.href = '/planet/apply';
+        });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // 临时显示复制成功提示
+        const button = event.target.closest('button');
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.add('btn-outline-success');
+        button.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            button.innerHTML = originalIcon;
+            button.classList.remove('btn-outline-success');
+            button.classList.add('btn-outline-secondary');
+        }, 1500);
+    }).catch(function(err) {
+        console.error('Failed to copy text: ', err);
+    });
+}
+
+// 图片懒加载优化
+document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('img[loading="lazy"]');
+    
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.classList.add('fade-in');
+                    observer.unobserve(img);
+                }
+            });
+        });
+        
+        images.forEach(img => imageObserver.observe(img));
+    }
+});
+</script>
+{% endblock %}

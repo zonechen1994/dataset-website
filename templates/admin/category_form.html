@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if category %}编辑器官分类{% else %}添加器官分类{% endif %} - 管理后台
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 admin-sidebar-column">
+            {% include 'admin/sidebar.html' %}
+        </div>
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-tags"></i>
+                    {% if category %}编辑器官分类{% else %}添加器官分类{% endif %}
+                </h2>
+                <a href="{{ url_for('admin_categories') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <form method="POST">
+                                <div class="mb-3">
+                                    <label for="code" class="form-label">分类代码 *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="code" 
+                                           name="code" 
+                                           value="{{ category.code if category else '' }}"
+                                           placeholder="如: xinzang, fei, gan"
+                                           required>
+                                    <div class="form-text">
+                                        用于系统内部识别的唯一代码，建议使用拼音或英文，不可重复
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">分类名称 *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="name" 
+                                           name="name" 
+                                           value="{{ category.name if category else '' }}"
+                                           placeholder="如: 心脏, 肺部, 肝脏"
+                                           required>
+                                    <div class="form-text">
+                                        用于显示的分类名称，用户可见
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">描述信息</label>
+                                    <textarea class="form-control" 
+                                              id="description" 
+                                              name="description" 
+                                              rows="3"
+                                              placeholder="简要描述此器官分类的用途和包含范围">{{ category.description if category else '' }}</textarea>
+                                    <div class="form-text">
+                                        可选，用于说明此分类的详细信息
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i>
+                                        {% if category %}更新分类{% else %}创建分类{% endif %}
+                                    </button>
+                                    <a href="{{ url_for('admin_categories') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> 取消
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- 帮助信息 -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-lightbulb"></i> 使用说明</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                <li><strong>分类代码</strong>：必须唯一，建议使用拼音或英文，如 "xinzang"、"brain" 等</li>
+                                <li><strong>分类名称</strong>：用户界面中显示的名称，如 "心脏"、"脑部" 等</li>
+                                <li><strong>描述信息</strong>：可选，用于详细说明此分类包含的器官范围</li>
+                                <li>创建后，此分类将出现在数据集的器官分类筛选选项中</li>
+                                <li>如果有数据集使用此分类，则无法删除，只能编辑</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 代码输入时自动转换为小写并移除特殊字符
+document.getElementById('code').addEventListener('input', function(e) {
+    let value = e.target.value.toLowerCase();
+    value = value.replace(/[^a-z0-9_]/g, ''); // 只保留字母、数字和下划线
+    e.target.value = value;
+});
+</script>
+{% endblock %}

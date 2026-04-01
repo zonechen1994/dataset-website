@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{% if task_type %}编辑任务类型{% else %}添加任务类型{% endif %} - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 admin-sidebar-column">
+            {% include 'admin/sidebar.html' %}
+        </div>
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-tasks"></i> 
+                    {% if task_type %}编辑任务类型{% else %}添加任务类型{% endif %}
+                </h2>
+                <a href="{{ url_for('admin_task_types') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <form method="POST">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="code" class="form-label">代码 <span class="text-danger">*</span></label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="code" 
+                                               name="code" 
+                                               value="{{ task_type.code if task_type else '' }}"
+                                               placeholder="例：classification"
+                                               pattern="[a-zA-Z][a-zA-Z0-9_]*"
+                                               title="代码必须以字母开头，只能包含字母、数字和下划线"
+                                               required>
+                                        <div class="form-text">用于系统内部标识的英文代码</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="name" class="form-label">中文名称 <span class="text-danger">*</span></label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="name" 
+                                               name="name" 
+                                               value="{{ task_type.name if task_type else '' }}"
+                                               placeholder="例：分类"
+                                               required>
+                                        <div class="form-text">任务类型的中文显示名称</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">描述</label>
+                                    <textarea class="form-control" 
+                                              id="description" 
+                                              name="description" 
+                                              rows="3"
+                                              placeholder="任务类型的详细说明（可选）">{{ task_type.description if task_type else '' }}</textarea>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('admin_task_types') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> 取消
+                                    </a>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-save"></i> 
+                                        {% if task_type %}更新任务类型{% else %}创建任务类型{% endif %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预设任务类型建议 -->
+            {% if not task_type %}
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-8">
+                    <div class="card border-info">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-lightbulb text-info"></i> 建议的任务类型</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 mb-3 suggestion-item" 
+                                         onclick="fillForm('classification', '分类', '图像或区域的分类任务')">
+                                        <strong>分类 (classification)</strong>
+                                        <div class="text-muted small">图像或区域的分类任务</div>
+                                    </div>
+                                    <div class="border rounded p-3 mb-3 suggestion-item" 
+                                         onclick="fillForm('segmentation', '分割', '图像像素级别的分割任务')">
+                                        <strong>分割 (segmentation)</strong>
+                                        <div class="text-muted small">图像像素级别的分割任务</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 mb-3 suggestion-item" 
+                                         onclick="fillForm('detection', '检测', '目标检测和定位任务')">
+                                        <strong>检测 (detection)</strong>
+                                        <div class="text-muted small">目标检测和定位任务</div>
+                                    </div>
+                                    <div class="border rounded p-3 mb-3 suggestion-item" 
+                                         onclick="fillForm('prognosis', '预后预测', '疾病预后和治疗效果预测')">
+                                        <strong>预后预测 (prognosis)</strong>
+                                        <div class="text-muted small">疾病预后和治疗效果预测</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <small class="text-muted">点击任意建议项目快速填充表单</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.suggestion-item {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+    border-color: #ffc107 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+
+<script>
+function fillForm(code, name, description) {
+    document.getElementById('code').value = code;
+    document.getElementById('name').value = name;
+    document.getElementById('description').value = description;
+    
+    // 滚动到表单顶部
+    document.querySelector('.card').scrollIntoView({behavior: 'smooth'});
+    
+    // 高亮表单
+    const form = document.querySelector('.card');
+    form.style.boxShadow = '0 0 20px rgba(255, 193, 7, 0.5)';
+    setTimeout(() => {
+        form.style.boxShadow = '';
+    }, 2000);
+}
+</script>
+{% endblock %}

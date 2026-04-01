@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}数据集管理 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 admin-sidebar-column">
+            {% include 'admin/sidebar.html' %}
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-database"></i> 数据集管理</h2>
+                <div>
+                    <a href="{{ url_for('new_dataset') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 新建数据集
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 搜索和筛选 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">搜索数据集</label>
+                            <input type="text" class="form-control" name="search" 
+                                   value="{{ current_filters.search }}" placeholder="名称、描述、解剖结构...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">器官分类</label>
+                            <select class="form-select" name="category">
+                                <option value="">全部分类</option>
+                                {% for category in categories %}
+                                <option value="{{ category.code }}" 
+                                        {% if current_filters.category == category.code %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">模态类型</label>
+                            <select class="form-select" name="modality">
+                                <option value="">全部模态</option>
+                                {% for modality in modalities %}
+                                <option value="{{ modality.code }}" 
+                                        {% if current_filters.modality == modality.code %}selected{% endif %}>
+                                    {{ modality.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">任务类型</label>
+                            <select class="form-select" name="task_type">
+                                <option value="">全部任务</option>
+                                {% for task_type in task_types %}
+                                <option value="{{ task_type.code }}" 
+                                        {% if current_filters.task_type == task_type.code %}selected{% endif %}>
+                                    {{ task_type.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> 搜索
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if datasets.items %}
+            <!-- 批量操作栏 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="form-check me-3">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                                <label class="form-check-label" for="selectAll">
+                                    全选 (共 {{ datasets.total }} 个数据集)
+                                </label>
+                            </div>
+                            <div class="batch-actions" style="display: none;">
+                                <button type="button" class="btn btn-danger" onclick="showBatchDeleteModal()">
+                                    <i class="fas fa-trash"></i> 批量删除
+                                </button>
+                                <span class="ms-2 text-muted">已选择 <span id="selectedCount">0</span> 个数据集</span>
+                            </div>
+                        </div>
+                        {% if current_filters.search or current_filters.category or current_filters.modality or current_filters.task_type %}
+                        <a href="{{ url_for('admin_datasets') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> 清除筛选
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 数据集列表 -->
+            <form id="batchDeleteForm" method="POST" action="{{ url_for('batch_delete_datasets') }}">
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="50">选择</th>
+                                    <th width="60">ID</th>
+                                    <th>名称</th>
+                                    <th>分类</th>
+                                    <th>模态</th>
+                                    <th>任务类型</th>
+                                    <th>数据量</th>
+                                    <th>发布日期</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dataset in datasets.items %}
+                                <tr class="dataset-row">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input dataset-select" 
+                                               name="dataset_ids" value="{{ dataset.id }}" id="dataset_{{ dataset.id }}">
+                                    </td>
+                                    <td><span class="badge bg-primary">{{ dataset.id }}</span></td>
+                                    <td>
+                                        <div class="fw-bold">{{ dataset.name }}</div>
+                                        {% if dataset.description %}
+                                        <small class="text-muted">{{ dataset.description[:80] }}{% if dataset.description|length > 80 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% for category in categories %}
+                                            {% if category.code == dataset.organ_category %}
+                                                <span class="badge bg-success">{{ category.name }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% for modality in modalities %}
+                                            {% if modality.code == dataset.modality %}
+                                                <span class="badge bg-info">{{ modality.name }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% for task_type in task_types %}
+                                            {% if task_type.code == dataset.task_type %}
+                                                <span class="badge bg-warning text-dark">{{ task_type.name }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ dataset.data_volume or '-' }}</td>
+                                    <td>{{ dataset.publication_date or '-' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('dataset_detail', dataset_id=dataset.id) }}" 
+                                               class="btn btn-outline-primary" title="查看详情">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('edit_dataset', dataset_id=dataset.id) }}" 
+                                               class="btn btn-outline-secondary" title="编辑">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="showDeleteModal('{{ dataset.id }}', '{{ dataset.name }}')" title="删除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- 分页 -->
+            {% if datasets.pages > 1 %}
+            <nav aria-label="数据集分页" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if datasets.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_datasets', page=datasets.prev_num, **current_filters) }}">上一页</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in datasets.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != datasets.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin_datasets', page=page_num, **current_filters) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if datasets.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_datasets', page=datasets.next_num, **current_filters) }}">下一页</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>没有找到匹配的数据集</h5>
+                    <p class="text-muted">请尝试调整搜索条件或筛选参数</p>
+                    <a href="{{ url_for('admin_datasets') }}" class="btn btn-primary">查看全部数据集</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 单个删除确认对话框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除数据集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>您确定要删除数据集 <strong id="deleteDatasetName"></strong> 吗？</p>
+                <p class="text-muted small">此操作不可撤销，数据集的所有信息都将被永久删除。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量删除确认对话框 -->
+<div class="modal fade" id="batchDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认批量删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>警告：</strong>您即将删除 <strong id="batchSelectedCount"></strong> 个数据集。
+                </div>
+                <p>此操作不可撤销，以下数据集将被永久删除：</p>
+                <div id="selectedDatasetsList" class="mt-3" style="max-height: 300px; overflow-y: auto;">
+                    <!-- 动态填充选中的数据集列表 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="submitBatchDelete()">确认批量删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 全选/取消全选
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.dataset-select');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+    updateBatchActions();
+});
+
+// 监听单个复选框变化
+document.querySelectorAll('.dataset-select').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        updateBatchActions();
+        updateSelectAllState();
+    });
+});
+
+// 更新全选状态
+function updateSelectAllState() {
+    const selectedBoxes = document.querySelectorAll('.dataset-select:checked');
+    const totalBoxes = document.querySelectorAll('.dataset-select');
+    const selectAll = document.getElementById('selectAll');
+    
+    selectAll.indeterminate = selectedBoxes.length > 0 && selectedBoxes.length < totalBoxes.length;
+    selectAll.checked = selectedBoxes.length === totalBoxes.length && totalBoxes.length > 0;
+}
+
+// 显示/隐藏批量操作
+function updateBatchActions() {
+    const selectedBoxes = document.querySelectorAll('.dataset-select:checked');
+    const batchActions = document.querySelector('.batch-actions');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    
+    if (selectedBoxes.length > 0) {
+        batchActions.style.display = 'inline-block';
+        selectedCountSpan.textContent = selectedBoxes.length;
+    } else {
+        batchActions.style.display = 'none';
+    }
+    
+    // 高亮选中的行
+    document.querySelectorAll('.dataset-row').forEach(row => {
+        const checkbox = row.querySelector('.dataset-select');
+        if (checkbox && checkbox.checked) {
+            row.classList.add('table-warning');
+        } else {
+            row.classList.remove('table-warning');
+        }
+    });
+}
+
+// 显示单个删除确认对话框
+function showDeleteModal(datasetId, datasetName) {
+    document.getElementById('deleteDatasetName').textContent = datasetName;
+    document.getElementById('deleteForm').action = `/dataset/${datasetId}/delete`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// 显示批量删除确认对话框
+function showBatchDeleteModal() {
+    const selectedBoxes = document.querySelectorAll('.dataset-select:checked');
+    
+    if (selectedBoxes.length === 0) {
+        alert('请选择要删除的数据集');
+        return;
+    }
+    
+    document.getElementById('batchSelectedCount').textContent = selectedBoxes.length;
+    
+    // 构建选中数据集的详细列表
+    const selectedList = document.getElementById('selectedDatasetsList');
+    let listHtml = '<ul class="list-group">';
+    
+    selectedBoxes.forEach(checkbox => {
+        const row = checkbox.closest('tr');
+        const id = checkbox.value;
+        const nameElement = row.querySelector('td:nth-child(3) .fw-bold');
+        const categoryElement = row.querySelector('td:nth-child(4) .badge');
+        
+        const name = nameElement ? nameElement.textContent.trim() : '未知';
+        const category = categoryElement ? categoryElement.textContent.trim() : '';
+        
+        listHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>ID ${id}:</strong> ${name}
+                ${category ? `<span class="badge bg-secondary ms-2">${category}</span>` : ''}
+            </div>
+        </li>`;
+    });
+    
+    listHtml += '</ul>';
+    selectedList.innerHTML = listHtml;
+    
+    const modal = new bootstrap.Modal(document.getElementById('batchDeleteModal'));
+    modal.show();
+}
+
+// 提交批量删除
+function submitBatchDelete() {
+    document.getElementById('batchDeleteForm').submit();
+}
+
+// 初始化
+updateBatchActions();
+updateSelectAllState();
+</script>
+
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends "base_simple.html" %}
+
+{% block title %}用户注册 - 数据集管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-plus"></i> 用户注册
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名 <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   required
+                                   minlength="3"
+                                   placeholder="请输入用户名（至少3个字符）"
+                                   value="{{ request.form.username or '' }}">
+                            <div class="form-text">用户名将用于登录，不能重复</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">邮箱 <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       required
+                                       placeholder="请输入邮箱地址"
+                                       value="{{ request.form.email or '' }}">
+                                <button type="button" 
+                                        class="btn btn-outline-primary" 
+                                        id="sendCodeBtn"
+                                        onclick="sendVerificationCode()">
+                                    <span id="sendCodeText">发送验证码</span>
+                                </button>
+                            </div>
+                            <div class="form-text">请填写真实邮箱，我们将发送验证码到此邮箱</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="verification_code" class="form-label">邮箱验证码 <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="verification_code" 
+                                   name="verification_code" 
+                                   required
+                                   maxlength="6"
+                                   placeholder="请输入6位验证码"
+                                   pattern="[0-9]{6}"
+                                   value="{{ request.form.verification_code or '' }}">
+                            <div class="form-text">
+                                <span id="codeStatus">请先获取验证码</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">姓名</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="full_name" 
+                                   name="full_name" 
+                                   placeholder="请输入真实姓名（可选）"
+                                   value="{{ request.form.full_name or '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码 <span class="text-danger">*</span></label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   required
+                                   minlength="6"
+                                   placeholder="请输入密码（至少6个字符）">
+                            <div class="form-text">密码长度至少6个字符</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">确认密码 <span class="text-danger">*</span></label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="confirm_password" 
+                                   name="confirm_password" 
+                                   required
+                                   minlength="6"
+                                   placeholder="请再次输入密码">
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> 注册
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">
+                        已有账户？ 
+                        <a href="{{ url_for('auth.login') }}" class="text-decoration-none">立即登录</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 验证码倒计时变量
+let countdownTimer = null;
+
+// 密码确认验证
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (confirmPassword && password !== confirmPassword) {
+        this.setCustomValidity('两次密码输入不一致');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    const confirmPassword = document.getElementById('confirm_password');
+    if (confirmPassword.value) {
+        confirmPassword.dispatchEvent(new Event('input'));
+    }
+});
+
+// 发送验证码功能
+function sendVerificationCode() {
+    const emailInput = document.getElementById('email');
+    const sendBtn = document.getElementById('sendCodeBtn');
+    const sendText = document.getElementById('sendCodeText');
+    const codeStatus = document.getElementById('codeStatus');
+    
+    // 检查邮箱格式
+    if (!emailInput.value) {
+        showAlert('请先输入邮箱地址', 'warning');
+        emailInput.focus();
+        return;
+    }
+    
+    if (!emailInput.checkValidity()) {
+        showAlert('请输入有效的邮箱地址', 'warning');
+        emailInput.focus();
+        return;
+    }
+    
+    // 禁用按钮，显示发送中状态
+    sendBtn.disabled = true;
+    sendText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发送中...';
+    
+    // 发送验证码请求
+    fetch('/send-verification-code', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            email: emailInput.value,
+            purpose: 'registration'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            codeStatus.innerHTML = `验证码已发送，${data.expires_in}分钟内有效`;
+            codeStatus.className = 'form-text text-success';
+            
+            // 开始倒计时
+            startCountdown(60);
+        } else {
+            showAlert(data.message, 'error');
+            sendBtn.disabled = false;
+            sendText.textContent = '发送验证码';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('发送验证码失败，请稍后重试', 'error');
+        sendBtn.disabled = false;
+        sendText.textContent = '发送验证码';
+    });
+}
+
+// 倒计时功能
+function startCountdown(seconds) {
+    const sendBtn = document.getElementById('sendCodeBtn');
+    const sendText = document.getElementById('sendCodeText');
+    let remaining = seconds;
+    
+    countdownTimer = setInterval(function() {
+        sendText.textContent = `重新发送 (${remaining}s)`;
+        remaining--;
+        
+        if (remaining < 0) {
+            clearInterval(countdownTimer);
+            sendBtn.disabled = false;
+            sendText.textContent = '发送验证码';
+        }
+    }, 1000);
+}
+
+// 显示提示信息
+function showAlert(message, type) {
+    // 创建或更新提示框
+    let alertDiv = document.getElementById('dynamicAlert');
+    if (!alertDiv) {
+        alertDiv = document.createElement('div');
+        alertDiv.id = 'dynamicAlert';
+        alertDiv.className = 'alert alert-dismissible fade show';
+        alertDiv.style.position = 'fixed';
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        alertDiv.style.minWidth = '300px';
+        document.body.appendChild(alertDiv);
+    }
+    
+    // 设置样式和内容
+    const alertClasses = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    };
+    
+    alertDiv.className = `alert ${alertClasses[type] || 'alert-info'} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        if (alertDiv && alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+
+// 邮箱输入框变化时重置状态
+document.getElementById('email').addEventListener('input', function() {
+    const codeStatus = document.getElementById('codeStatus');
+    const sendBtn = document.getElementById('sendCodeBtn');
+    const sendText = document.getElementById('sendCodeText');
+    
+    // 如果邮箱改变了，重置验证码状态
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        sendBtn.disabled = false;
+        sendText.textContent = '发送验证码';
+    }
+    
+    codeStatus.innerHTML = '请先获取验证码';
+    codeStatus.className = 'form-text';
+});
+
+// 验证码输入框格式验证
+document.getElementById('verification_code').addEventListener('input', function() {
+    const value = this.value.replace(/\D/g, ''); // 只保留数字
+    this.value = value.substring(0, 6); // 限制6位
+});
+</script>
+{% endblock %}

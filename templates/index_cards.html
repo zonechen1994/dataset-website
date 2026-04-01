@@ -1,0 +1,356 @@
+{% extends "base_simple.html" %}
+
+{% block title %}数据集展示 - 人体器官数据集网站{% endblock %}
+
+{% block content %}
+<!-- 欢迎标题 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="text-center">
+            <h1 class="display-5 fw-bold text-primary mb-3">
+                <i class="fas fa-database"></i> 人体器官医学数据集
+            </h1>
+            <p class="lead text-muted">
+                为医学研究和AI开发提供高质量的标准化数据集
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-database fa-2x mb-2"></i>
+                <h4>{{ datasets.total if datasets else 0 }}</h4>
+                <small>数据集总数</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-tags fa-2x mb-2"></i>
+                <h4>{{ categories|length }}</h4>
+                <small>器官分类</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-list fa-2x mb-2"></i>
+                <h4>{{ modalities|length }}</h4>
+                <small>模态类型</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-2x mb-2"></i>
+                <h4>{{ task_types|length }}</h4>
+                <small>任务类型</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 筛选侧边栏 -->
+    <div class="col-lg-3 col-md-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter text-primary"></i> 筛选条件
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('index') }}">
+                    <!-- 搜索框 -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">关键字搜索</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" name="search" 
+                                   value="{{ current_filters.search or '' }}" 
+                                   placeholder="搜索数据集...">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 器官分类 -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">器官分类</label>
+                        <select class="form-select form-select-sm" name="organ_category" onchange="this.form.submit()">
+                            <option value="">全部分类</option>
+                            {% for category in categories %}
+                            <option value="{{ category.code }}" 
+                                    {% if current_filters.organ_category == category.code %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- 模态类型 -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">模态类型</label>
+                        <select class="form-select form-select-sm" name="modality" onchange="this.form.submit()">
+                            <option value="">全部模态</option>
+                            {% for modality in modalities %}
+                            <option value="{{ modality.code }}" 
+                                    {% if current_filters.modality == modality.code %}selected{% endif %}>
+                                {{ modality.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- 任务类型 -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">任务类型</label>
+                        <select class="form-select form-select-sm" name="task_type" onchange="this.form.submit()">
+                            <option value="">全部任务</option>
+                            {% for task_type in task_types %}
+                            <option value="{{ task_type.code }}" 
+                                    {% if current_filters.task_type == task_type.code %}selected{% endif %}>
+                                {{ task_type.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- 清除筛选 -->
+                    <div class="d-grid">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i> 清除筛选
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 数据集卡片区域 -->
+    <div class="col-lg-9 col-md-8">
+        {% if datasets and datasets.items %}
+        <!-- 结果统计 -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-th-large text-primary"></i> 
+                数据集列表 
+                <span class="badge bg-secondary">{{ datasets.total }}</span>
+            </h5>
+            <small class="text-muted">
+                第 {{ datasets.page }} 页，共 {{ datasets.pages }} 页
+            </small>
+        </div>
+        
+        <!-- 数据集卡片 -->
+        <div class="row">
+            {% for dataset in datasets.items %}
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card h-100 shadow-sm dataset-card">
+                    <div class="card-header bg-white border-bottom-0 pb-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="card-title mb-1 text-truncate" title="{{ dataset.name }}">
+                                {{ dataset.name }}
+                            </h6>
+                            {% if dataset.organ_category %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary">
+                                {% if dataset.organ_category == 'fubu' %}腹部
+                                {% elif dataset.organ_category == 'gutou' %}骨头
+                                {% elif dataset.organ_category == 'neikuijing' %}内窥镜
+                                {% elif dataset.organ_category == 'quanshen' %}全身
+                                {% else %}{{ dataset.organ_category }}{% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body pt-2">
+                        <!-- 描述 -->
+                        {% if dataset.description %}
+                        <p class="card-text text-muted small mb-2" style="height: 3rem; overflow: hidden;">
+                            {{ dataset.description[:100] }}
+                            {% if dataset.description|length > 100 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- 元信息 -->
+                        <div class="mb-2">
+                            {% if dataset.dimension %}
+                            <span class="badge bg-light text-dark me-1">
+                                <i class="fas fa-cube"></i> {{ dataset.dimension }}
+                            </span>
+                            {% endif %}
+                            {% if dataset.modality %}
+                            <span class="badge bg-light text-dark me-1">
+                                <i class="fas fa-microscope"></i> {{ dataset.modality }}
+                            </span>
+                            {% endif %}
+                            {% if dataset.task_type %}
+                            <span class="badge bg-light text-dark me-1">
+                                <i class="fas fa-tasks"></i> {{ dataset.task_type }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if dataset.data_volume %}
+                        <div class="small text-muted mb-2">
+                            <i class="fas fa-database"></i> 数据量：{{ dataset.data_volume }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if dataset.publication_date %}
+                        <div class="small text-muted">
+                            <i class="fas fa-calendar"></i> 发布：{{ dataset.publication_date }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-white border-top-0 pt-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('dataset_detail', dataset_id=dataset.id) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> 查看详情
+                            </a>
+                            
+                            <!-- 下载权限预览 -->
+                            {% if current_user and (current_user.is_planet_user or is_admin) %}
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle"></i> 可下载
+                                </small>
+                            {% else %}
+                                <small class="text-warning">
+                                    <i class="fas fa-star"></i> 需权限
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 分页 -->
+        {% if datasets.pages > 1 %}
+        <nav aria-label="数据集分页">
+            <ul class="pagination justify-content-center">
+                {% if datasets.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=datasets.prev_num, **current_filters) }}">
+                        <i class="fas fa-chevron-left"></i> 上一页
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in datasets.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != datasets.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('index', page=page_num, **current_filters) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if datasets.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=datasets.next_num, **current_filters) }}">
+                        下一页 <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- 空状态 -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-database fa-4x text-muted"></i>
+            </div>
+            <h4 class="text-muted mb-3">暂无数据集</h4>
+            <p class="text-muted">
+                {% if current_filters.search or current_filters.organ_category or current_filters.modality or current_filters.task_type %}
+                没有找到符合筛选条件的数据集，请尝试调整筛选条件。
+                {% else %}
+                目前还没有上传任何数据集。
+                {% endif %}
+            </p>
+            {% if is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 添加数据集
+            </a>
+            {% else %}
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                <i class="fas fa-refresh"></i> 刷新页面
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.dataset-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #e9ecef;
+}
+
+.dataset-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+    border-color: #007bff;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.shortcut-hint {
+    position: absolute;
+    right: 8px;
+    top: 32px;
+    font-size: 0.75em;
+    color: #6c757d;
+    pointer-events: none;
+}
+</style>
+
+<script>
+// 键盘快捷键
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        document.querySelector('input[name="search"]').focus();
+    }
+});
+
+// 卡片悬停效果增强
+document.querySelectorAll('.dataset-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.borderColor = '#007bff';
+    });
+    card.addEventListener('mouseleave', function() {
+        this.style.borderColor = '#e9ecef';
+    });
+});
+</script>
+{% endblock %}

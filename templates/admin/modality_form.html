@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if modality %}编辑模态类型{% else %}添加模态类型{% endif %} - 管理后台
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 admin-sidebar-column">
+            {% include 'admin/sidebar.html' %}
+        </div>
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-list"></i>
+                    {% if modality %}编辑模态类型{% else %}添加模态类型{% endif %}
+                </h2>
+                <a href="{{ url_for('admin_modalities') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <form method="POST">
+                                <div class="mb-3">
+                                    <label for="code" class="form-label">模态代码 *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="code" 
+                                           name="code" 
+                                           value="{{ modality.code if modality else '' }}"
+                                           placeholder="如: CT, MRI, X光"
+                                           required>
+                                    <div class="form-text">
+                                        用于系统内部识别的唯一代码，不可重复
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">模态名称 *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="name" 
+                                           name="name" 
+                                           value="{{ modality.name if modality else '' }}"
+                                           placeholder="如: CT扫描, MRI磁共振, X射线摄影"
+                                           required>
+                                    <div class="form-text">
+                                        用于显示的模态名称，用户可见
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">分组类别 *</label>
+                                    <select class="form-select" id="category" name="category" required>
+                                        <option value="">请选择分组</option>
+                                        <option value="医学影像" {% if modality and modality.category == '医学影像' %}selected{% endif %}>医学影像</option>
+                                        <option value="病理学" {% if modality and modality.category == '病理学' %}selected{% endif %}>病理学</option>
+                                        <option value="功能检查" {% if modality and modality.category == '功能检查' %}selected{% endif %}>功能检查</option>
+                                        <option value="实验室检查" {% if modality and modality.category == '实验室检查' %}selected{% endif %}>实验室检查</option>
+                                        <option value="其他检查" {% if modality and modality.category == '其他检查' %}selected{% endif %}>其他检查</option>
+                                    </select>
+                                    <div class="form-text">
+                                        选择此模态类型所属的分组，用于界面中的分类显示
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">描述信息</label>
+                                    <textarea class="form-control" 
+                                              id="description" 
+                                              name="description" 
+                                              rows="3"
+                                              placeholder="简要描述此模态类型的用途和特点">{{ modality.description if modality else '' }}</textarea>
+                                    <div class="form-text">
+                                        可选，用于说明此模态类型的详细信息
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-info">
+                                        <i class="fas fa-save"></i>
+                                        {% if modality %}更新模态{% else %}创建模态{% endif %}
+                                    </button>
+                                    <a href="{{ url_for('admin_modalities') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> 取消
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- 帮助信息 -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-lightbulb"></i> 使用说明</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                <li><strong>模态代码</strong>：必须唯一，建议使用简短易懂的标识，如 "CT"、"MRI" 等</li>
+                                <li><strong>模态名称</strong>：用户界面中显示的名称，如 "CT扫描"、"MRI磁共振" 等</li>
+                                <li><strong>分组类别</strong>：用于在下拉选择框中分组显示，便于用户查找</li>
+                                <li><strong>描述信息</strong>：可选，用于详细说明此模态类型的特点和用途</li>
+                                <li>创建后，此模态将出现在数据集的模态类型筛选和选择选项中</li>
+                                <li>如果有数据集使用此模态，则无法删除，只能编辑</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- 示例信息 -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-example"></i> 示例</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>医学影像类</h6>
+                                    <ul class="small">
+                                        <li>代码: CT, 名称: CT扫描</li>
+                                        <li>代码: MRI, 名称: MRI磁共振</li>
+                                        <li>代码: X光, 名称: X射线摄影</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>功能检查类</h6>
+                                    <ul class="small">
+                                        <li>代码: 心电图, 名称: 心电图检查</li>
+                                        <li>代码: 脑电图, 名称: 脑电图检查</li>
+                                        <li>代码: 超声, 名称: 超声检查</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

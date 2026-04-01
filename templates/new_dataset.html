@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}新建数据集 - 数据集展示网站{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">新建数据集</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <!-- 基本信息 -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">基本信息</h5>
+                            
+                            <div class="mb-3">
+                                <label for="name" class="form-label">数据集名称 *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="organ_category" class="form-label">器官分类</label>
+                                <select class="form-select" id="organ_category" name="organ_category">
+                                    <option value="">请选择分类</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.code }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="dimension" class="form-label">维度</label>
+                                <select class="form-select" id="dimension" name="dimension">
+                                    <option value="">请选择维度</option>
+                                    <option value="2D">2D</option>
+                                    <option value="3D">3D</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="modality" class="form-label">数据模态</label>
+                                <select class="form-select" id="modality" name="modality">
+                                    <option value="">请选择模态</option>
+                                    {% set current_category = '' %}
+                                    {% for modality in modalities %}
+                                        {% if current_category != modality.category %}
+                                            {% if current_category != '' %}</optgroup>{% endif %}
+                                            {% set current_category = modality.category %}
+                                            <optgroup label="{{ modality.category }}">
+                                        {% endif %}
+                                        <option value="{{ modality.code }}">{{ modality.name }}</option>
+                                    {% endfor %}
+                                    {% if modalities %}</optgroup>{% endif %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="task_type" class="form-label">任务类型</label>
+                                <select class="form-select" id="task_type" name="task_type">
+                                    <option value="">请选择任务类型</option>
+                                    {% for task_type in task_types %}
+                                    <option value="{{ task_type.code }}">{{ task_type.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="anatomical_structure" class="form-label">解剖结构</label>
+                                <input type="text" class="form-control" id="anatomical_structure" name="anatomical_structure">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="anatomical_region" class="form-label">解剖区域</label>
+                                <input type="text" class="form-control" id="anatomical_region" name="anatomical_region">
+                            </div>
+                            
+                            <!-- 作者信息编辑区 -->
+                            <div class="mb-3">
+                                <label for="authors_text" class="form-label">作者及机构</label>
+                                <textarea class="form-control" id="authors_text" name="authors_text" rows="4" 
+                                          placeholder="每行输入一个作者，格式：姓名 | 机构名称&#10;例如：&#10;张三 | 清华大学&#10;李四 | 北京大学医学院&#10;王五"></textarea>
+                                <div class="form-text">
+                                    每行输入一个作者。格式：<code>姓名 | 机构名称</code>，机构名称可选
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 技术参数 -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">技术参数</h5>
+                            
+                            <div class="mb-3">
+                                <label for="num_classes" class="form-label">类别数</label>
+                                <input type="number" class="form-control" id="num_classes" name="num_classes">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="data_volume" class="form-label">数据量</label>
+                                <input type="text" class="form-control" id="data_volume" name="data_volume" 
+                                       placeholder="如: 1000张, 500例">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="file_format" class="form-label">文件格式</label>
+                                <input type="text" class="form-control" id="file_format" name="file_format" 
+                                       placeholder="如: DICOM, NIfTI, JPEG">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="publication_date" class="form-label">发布日期</label>
+                                <input type="text" class="form-control" id="publication_date" name="publication_date" 
+                                       placeholder="如: 2023, 2023-06">
+                            </div>
+                            
+                            <h5 class="mb-3 mt-4">链接信息</h5>
+                            
+                            <div class="mb-3">
+                                <label for="official_website" class="form-label">官方网站</label>
+                                <input type="text" class="form-control" id="official_website" name="official_website" 
+                                       placeholder="请输入网站链接，如无可填写 NA">
+                                <div class="form-text">支持填写 NA、TBD 等占位符</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="download_link" class="form-label">下载链接</label>
+                                <input type="text" class="form-control" id="download_link" name="download_link" 
+                                       placeholder="请输入下载链接，如无可填写 NA">
+                                <div class="form-text">支持填写 NA、TBD 等占位符</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="baidu_pan_link" class="form-label">百度网盘链接</label>
+                                <input type="text" class="form-control" id="baidu_pan_link" name="baidu_pan_link" 
+                                       placeholder="请输入百度网盘分享链接，如无可填写 NA">
+                                <div class="form-text">支持填写 NA、TBD 等占位符</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="baidu_pan_password" class="form-label">百度网盘提取码</label>
+                                <input type="text" class="form-control" id="baidu_pan_password" name="baidu_pan_password" 
+                                       placeholder="请输入提取码（通常为4位字符）" maxlength="20">
+                                <div class="form-text">如果网盘链接不需要提取码可留空</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="paper_link" class="form-label">论文链接</label>
+                                <input type="text" class="form-control" id="paper_link" name="paper_link" 
+                                       placeholder="请输入论文链接，如无可填写 NA">
+                                <div class="form-text">支持填写 NA、TBD 等占位符</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 描述信息 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="mb-3">详细信息</h5>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">数据集描述</label>
+                                <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">可视化图片</label>
+                                <div id="image-uploader"></div>
+                                <div class="form-text">
+                                    支持拖放上传或输入图片URL。建议使用本地上传以确保图片稳定性。
+                                </div>
+                                
+                                <!-- 备用的URL输入方式 -->
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                            onclick="toggleUrlInput()" id="url-toggle-btn">
+                                        <i class="fas fa-link"></i> 使用URL链接方式
+                                    </button>
+                                </div>
+                                
+                                <div id="url-input-section" style="display: none;" class="mt-3">
+                                    <label for="visualization_images" class="form-label">图片URL链接</label>
+                                    <textarea class="form-control" id="visualization_images" name="visualization_images" rows="4" 
+                                              placeholder="每行输入一个图片URL，例如：&#10;https://example.com/image1.png&#10;https://example.com/image2.jpg"></textarea>
+                                    <div class="form-text">每行输入一个图片URL，系统会自动显示这些图片。</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="file_structure" class="form-label">文件结构</label>
+                                <textarea class="form-control" id="file_structure" name="file_structure" rows="6" 
+                                          placeholder="描述数据集的文件目录结构"></textarea>
+                            </div>
+                            
+                            <!-- 图像尺寸统计 Section -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-ruler-combined"></i> 图像尺寸统计</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless">
+                                            <thead>
+                                                <tr>
+                                                    <th width="20%">统计类型</th>
+                                                    <th width="40%">尺寸 (像素)</th>
+                                                    <th width="40%">间距 (mm，可选)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><span class="badge bg-info">最小值</span></td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" 
+                                                               name="min_size" id="min_size"
+                                                               placeholder="如: 480x854">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" 
+                                                               name="min_spacing" id="min_spacing"
+                                                               placeholder="如: 0.5x0.5x1.0">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-success">中位值</span></td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" 
+                                                               name="median_size" id="median_size"
+                                                               placeholder="如: 512x512">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" 
+                                                               name="median_spacing" id="median_spacing"
+                                                               placeholder="如: 1.0x1.0x1.0">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-warning">最大值</span></td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" 
+                                                               name="max_size" id="max_size"
+                                                               placeholder="如: 1024x1024">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" 
+                                                               name="max_spacing" id="max_spacing"
+                                                               placeholder="如: 2.0x2.0x5.0">
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="form-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i> 
+                                            尺寸格式: 宽x高 (2D) 或 宽x高x深 (3D)，间距为可选字段
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="citation" class="form-label">引用信息</label>
+                                <textarea class="form-control" id="citation" name="citation" rows="4" 
+                                          placeholder="BibTeX格式的引用信息"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('index') }}" class="btn btn-secondary">取消</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> 创建数据集
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/image_upload.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化图片上传器
+    imageUploader = new ImageUploader('image-uploader', {
+        maxFiles: 10,
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        uploadUrl: '/api/upload-image',
+        onUploadSuccess: function(result) {
+            console.log('图片上传成功:', result);
+        }
+    });
+});
+
+function toggleUrlInput() {
+    const urlSection = document.getElementById('url-input-section');
+    const toggleBtn = document.getElementById('url-toggle-btn');
+    
+    if (urlSection.style.display === 'none') {
+        urlSection.style.display = 'block';
+        toggleBtn.innerHTML = '<i class="fas fa-times"></i> 隐藏URL输入';
+    } else {
+        urlSection.style.display = 'none';
+        toggleBtn.innerHTML = '<i class="fas fa-link"></i> 使用URL链接方式';
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base_simple.html" %}
+
+{% block title %}编辑个人资料 - 数据集管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-edit"></i> 编辑个人资料
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   value="{{ user.username }}"
+                                   disabled
+                                   readonly>
+                            <div class="form-text">用户名不可修改</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">姓名</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="full_name" 
+                                   name="full_name" 
+                                   placeholder="请输入真实姓名"
+                                   value="{{ request.form.full_name or user.full_name or '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">邮箱 <span class="text-danger">*</span></label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email" 
+                                   required
+                                   placeholder="请输入邮箱地址"
+                                   value="{{ request.form.email or user.email }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">角色</label>
+                            <div class="form-control-plaintext">
+                                {% if user.role == 'admin' %}
+                                    <span class="badge bg-danger">管理员</span>
+                                {% else %}
+                                    <span class="badge bg-primary">普通用户</span>
+                                {% endif %}
+                                <div class="form-text">角色由管理员设置，无法自行修改</div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> 取消
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

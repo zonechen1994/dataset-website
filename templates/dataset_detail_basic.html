@@ -1,0 +1,211 @@
+{% extends "base_simple.html" %}
+
+{% block title %}{{ dataset.name }} - 数据集展示网站{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- 数据集基本信息 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">{{ dataset.name }}</h4>
+                {% if is_admin %}
+                <div>
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if dataset.description %}
+                <p class="card-text">{{ dataset.description }}</p>
+                {% endif %}
+                
+                <!-- 器官分类标签 -->
+                {% if dataset.organ_category %}
+                <span class="badge bg-primary mb-3">
+                    {% if dataset.organ_category == 'fubu' %}腹部
+                    {% elif dataset.organ_category == 'gutou' %}骨头
+                    {% elif dataset.organ_category == 'neikuijing' %}内窥镜
+                    {% elif dataset.organ_category == 'quanshen' %}全身
+                    {% else %}{{ dataset.organ_category }}{% endif %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 数据集元信息表格 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table"></i> 数据集元信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            {% if dataset.dimension %}
+                            <tr><td><strong>维度</strong></td><td>{{ dataset.dimension }}</td></tr>
+                            {% endif %}
+                            {% if dataset.modality %}
+                            <tr><td><strong>模态</strong></td><td>{{ dataset.modality }}</td></tr>
+                            {% endif %}
+                            {% if dataset.task_type %}
+                            <tr><td><strong>任务类型</strong></td><td>{{ dataset.task_type }}</td></tr>
+                            {% endif %}
+                            {% if dataset.anatomical_structure %}
+                            <tr><td><strong>解剖结构</strong></td><td>{{ dataset.anatomical_structure }}</td></tr>
+                            {% endif %}
+                            {% if dataset.anatomical_region %}
+                            <tr><td><strong>解剖区域</strong></td><td>{{ dataset.anatomical_region }}</td></tr>
+                            {% endif %}
+                            {% if dataset.num_classes %}
+                            <tr><td><strong>类别数</strong></td><td>{{ dataset.num_classes }}</td></tr>
+                            {% endif %}
+                            {% if dataset.data_volume %}
+                            <tr><td><strong>数据量</strong></td><td>{{ dataset.data_volume }}</td></tr>
+                            {% endif %}
+                            {% if dataset.file_format %}
+                            <tr><td><strong>文件格式</strong></td><td>{{ dataset.file_format }}</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- 来源信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-link"></i> 来源信息</h5>
+            </div>
+            <div class="card-body">
+                {% if dataset.official_website %}
+                <p><strong>官方网站：</strong><br>
+                {% if dataset.official_website.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.official_website }}</span>
+                {% else %}
+                    <a href="{{ dataset.official_website }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt"></i> 访问官网
+                    </a>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.download_link %}
+                <p><strong>下载链接：</strong><br>
+                {% if dataset.download_link.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.download_link }}</span>
+                {% else %}
+                    <!-- 普通下载链接 - 对所有用户开放 -->
+                    <div class="download-section">
+                        <a href="{{ url_for('download_dataset', dataset_id=dataset.id) }}" target="_blank" class="btn btn-sm btn-success">
+                            <i class="fas fa-download"></i> 下载数据
+                        </a>
+                        <div class="mt-1">
+                            <small class="text-success">
+                                <i class="fas fa-globe"></i> 公开下载，无需权限
+                            </small>
+                        </div>
+                    </div>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.baidu_pan_link %}
+                <p><strong>百度网盘：</strong><br>
+                {% if dataset.baidu_pan_link.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.baidu_pan_link }}</span>
+                {% else %}
+                    <!-- 百度网盘权限控制 -->
+                    <div class="baidu-pan-section">
+                        {% if current_user and (current_user.is_planet_user or is_admin) %}
+                            <!-- 知识星球用户或管理员可以访问百度网盘 -->
+                            <a href="{{ url_for('baidu_pan_dataset', dataset_id=dataset.id) }}" target="_blank" class="btn btn-sm btn-primary">
+                                <i class="fab fa-cloud"></i> 百度网盘下载
+                            </a>
+                            {% if dataset.baidu_pan_password %}
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>提取码：</strong>
+                                    <span class="badge bg-info" style="user-select: all;">{{ dataset.baidu_pan_password }}</span>
+                                </small>
+                            </div>
+                            {% endif %}
+                            {% if current_user.is_planet_user and not is_admin %}
+                            <div class="mt-1">
+                                <small class="text-success">
+                                    <i class="fas fa-star"></i> 知识星球用户权限
+                                </small>
+                            </div>
+                            {% endif %}
+                        {% elif current_user %}
+                            <!-- 已登录但不是知识星球用户 -->
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-star"></i> 需要知识星球权限</h6>
+                                <p class="mb-2">百度网盘下载需要知识星球会员权限。</p>
+                                <a href="{{ url_for('planet.apply') }}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-star"></i> 申请知识星球权限
+                                </a>
+                                <small class="d-block mt-2 text-muted">申请通过后即可访问所有下载链接</small>
+                            </div>
+                            <!-- 显示隐藏的提取码提示 -->
+                            {% if dataset.baidu_pan_password %}
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    <i class="fas fa-lock"></i> 提取码：需要权限后可见
+                                </small>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <!-- 未登录用户 -->
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-sign-in-alt"></i> 登录后访问
+                            </a>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> 需要登录并获得知识星球权限
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.paper_link %}
+                <p><strong>相关论文：</strong><br>
+                {% if dataset.paper_link.upper() in ['NA', 'TBD', 'N/A', '待定', '无'] %}
+                    <span class="text-muted">{{ dataset.paper_link }}</span>
+                {% else %}
+                    <a href="{{ dataset.paper_link }}" target="_blank" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-file-alt"></i> 查看论文
+                    </a>
+                {% endif %}
+                </p>
+                {% endif %}
+                
+                {% if dataset.publication_date %}
+                <p><strong>发布日期：</strong> {{ dataset.publication_date }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 统计信息</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>创建时间：</strong> {{ dataset.created_at.strftime('%Y-%m-%d %H:%M') if dataset.created_at else '未知' }}</p>
+                <p><strong>更新时间：</strong> {{ dataset.updated_at.strftime('%Y-%m-%d %H:%M') if dataset.updated_at else '未知' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

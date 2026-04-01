@@ -1,0 +1,66 @@
+{% extends "base_simple.html" %}
+
+{% block title %}用户登录 - 数据集管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-sign-in-alt"></i> 用户登录
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   required
+                                   placeholder="请输入用户名"
+                                   value="{{ request.form.username or '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码</label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   required
+                                   placeholder="请输入密码">
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   id="remember" 
+                                   name="remember">
+                            <label class="form-check-label" for="remember">
+                                记住我
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> 登录
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">
+                        还没有账户？ 
+                        <a href="{{ url_for('auth.register') }}" class="text-decoration-none">立即注册</a>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1172 @@
+/* 自定义样式 */
+
+/* 整体布局 */
+body {
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    min-height: 100vh;
+    color: #212529;
+}
+
+/* 导航栏样式 */
+.navbar {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+/* 卡片样式 */
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    background: #ffffff;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 数据集卡片图片样式 */
+.card-img-top-container:hover img {
+    transform: scale(1.05);
+}
+
+.card-img-top {
+    transition: transform 0.3s ease;
+}
+
+/* 图片加载占位符 */
+.card-img-top-placeholder {
+    border-radius: 12px 12px 0 0;
+    transition: all 0.3s ease;
+}
+
+.card:hover .card-img-top-placeholder {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.card-header {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    border: none;
+    font-weight: 600;
+}
+
+.card-title {
+    color: #212529;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+/* 筛选面板样式 */
+.filters-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.filters-section h5 {
+    color: #212529;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 表单控件样式 */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+    color: #495057;
+    font-weight: 500;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    background-color: #fff;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    padding: 0.5rem 1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(90deg, #5a67d8 0%, #68559a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-outline-secondary {
+    border: 2px solid #718096;
+    color: #718096;
+}
+
+.btn-outline-secondary:hover {
+    background: #718096;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-outline-danger {
+    border: 2px solid #e53e3e;
+    color: #e53e3e;
+}
+
+.btn-outline-danger:hover {
+    background: #e53e3e;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* 徽章样式 */
+.badge {
+    border-radius: 20px;
+    font-weight: 500;
+    padding: 0.35em 0.8em;
+}
+
+.badge.bg-primary {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.category-badge {
+    font-size: 0.75rem;
+    letter-spacing: 0.025em;
+}
+
+/* 数据集元信息样式 */
+.dataset-meta {
+    font-size: 0.875rem;
+    color: #495057;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.dataset-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dataset-meta i {
+    color: #a0aec0;
+}
+
+/* 统计信息样式 */
+.stats-grid {
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.stats-grid .col-4 {
+    text-align: center;
+    padding: 8px 4px;
+}
+
+.stats-grid small {
+    color: #495057;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 600;
+}
+
+.stats-grid strong {
+    color: #212529;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* 分页样式 */
+.pagination {
+    margin-top: 2rem;
+}
+
+.page-link {
+    border-radius: 8px;
+    margin: 0 2px;
+    border: 1px solid #e2e8f0;
+    color: #667eea;
+    transition: all 0.2s ease;
+}
+
+.page-link:hover {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+
+/* 表格样式 */
+.table {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.table th {
+    background: rgba(102, 126, 234, 0.15);
+    border: none;
+    font-weight: 700;
+    color: #212529;
+    padding: 12px;
+}
+
+.table td {
+    border: none;
+    padding: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    color: #495057;
+    font-weight: 500;
+}
+
+/* 代码块样式 */
+pre {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    border: 1px solid #4a5568;
+}
+
+pre code {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+    font-weight: 500;
+}
+
+/* 修复白色背景代码块问题 */
+.card-body pre {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+}
+
+.card-body pre code {
+    background: transparent !important;
+    color: #f7fafc !important;
+}
+
+/* 确保所有代码块都有深色背景 */
+pre, code {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+}
+
+/* 行内代码样式 */
+code {
+    background: #e9ecef !important;
+    color: #495057 !important;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.875em;
+}
+
+/* 代码块内的代码保持深色主题 */
+pre code {
+    background: transparent !important;
+    color: #f7fafc !important;
+    padding: 0;
+}
+
+/* 额外的代码块样式修复 */
+.bg-light {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+}
+
+/* 确保引用信息代码块正确显示 */
+div pre, .card pre, .card-body pre {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+}
+
+/* Bootstrap 覆盖 */
+.bg-light pre {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+}
+
+/* 任何包含代码的区域 */
+*:has(pre) pre {
+    background: #2d3748 !important;
+    color: #f7fafc !important;
+}
+
+/* 警告框样式 */
+.alert {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background: rgba(72, 187, 120, 0.1);
+    color: #276749;
+    border-left: 4px solid #48bb78;
+}
+
+.alert-danger {
+    background: rgba(229, 62, 62, 0.1);
+    color: #742a2a;
+    border-left: 4px solid #e53e3e;
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #495057;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #adb5bd;
+}
+
+.empty-state h5 {
+    color: #212529;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* 加载状态 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .filters-section {
+        margin-bottom: 1rem;
+    }
+    
+    .dataset-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .stats-grid .col-4 {
+        margin-bottom: 12px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 工具提示样式 */
+.tooltip-inner {
+    background-color: #2d3748;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+/* 模态框样式 */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 12px 12px;
+}
+
+/* Footer样式 */
+footer {
+    background: #ffffff !important;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    color: #495057;
+}
+
+/* 增强文本对比度 */
+h1, h2, h3, h4, h5, h6 {
+    color: #212529 !important;
+    font-weight: 700;
+}
+
+p, span, div {
+    color: #495057;
+}
+
+.text-muted {
+    color: #6c757d !important;
+    font-weight: 500;
+}
+
+/* 链接样式增强 */
+a {
+    color: #667eea;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #5a67d8;
+    text-decoration: underline;
+}
+
+/* 加载覆盖层 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+.loading-spinner {
+    text-align: center;
+    color: #667eea;
+}
+
+.loading-spinner p {
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+/* 返回顶部按钮动画 */
+.back-to-top {
+    transition: all 0.3s ease;
+}
+
+.back-to-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+}
+
+/* Toast容器样式 */
+.toast {
+    backdrop-filter: blur(10px);
+}
+
+/* 搜索高亮效果 */
+.search-highlight {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    transform: scale(1.02);
+}
+
+/* 键盘快捷键提示 */
+.shortcut-hint {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: #a0aec0;
+    pointer-events: none;
+}
+
+/* 文件预览样式 */
+#file-preview .card {
+    border: 2px dashed #cbd5e0;
+    background: rgba(249, 250, 251, 0.8);
+}
+
+#file-info .alert {
+    border: none;
+    border-radius: 8px;
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+    color: #4c51bf;
+}
+
+/* 删除按钮加载状态 */
+.btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 平滑滚动 */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 选择状态样式 */
+::selection {
+    background: rgba(102, 126, 234, 0.3);
+    color: #2d3748;
+}
+
+::-moz-selection {
+    background: rgba(102, 126, 234, 0.3);
+    color: #2d3748;
+}
+
+/* 聚焦状态增强 */
+.form-control:focus,
+.form-select:focus,
+.btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* 数据集卡片悬停时的详细信息显示 */
+.card-hover-details {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 0 0 12px 12px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+.card:hover .card-hover-details {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 进度指示器 */
+.progress-indicator {
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    transition: width 0.3s ease;
+}
+
+/* 图片延迟加载占位符 */
+.img-placeholder {
+    background: linear-gradient(45deg, #f7fafc 25%, transparent 25%), 
+                linear-gradient(-45deg, #f7fafc 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f7fafc 75%), 
+                linear-gradient(-45deg, transparent 75%, #f7fafc 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+    100% { background-position: 20px 20px, 20px 30px, 30px 10px, 10px 20px; }
+}
+
+/* 错误状态样式 */
+.error-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #e53e3e;
+}
+
+.error-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #feb2b2;
+}
+
+/* 成功状态样式 */
+.success-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #38a169;
+}
+
+.success-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #9ae6b4;
+}
+
+/* 数据集卡片网格优化 */
+.dataset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 0;
+}
+
+/* 数据集卡片统一高度 */
+.dataset-card {
+    height: 100%;
+    min-height: 550px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dataset-card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* 标题区域固定高度 */
+.dataset-title {
+    height: 3rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+}
+
+/* 元信息区域固定高度 */
+.dataset-meta-section {
+    min-height: 5rem;
+    margin-bottom: 1rem;
+}
+
+.dataset-meta-section .badge {
+    margin-bottom: 0.5rem;
+}
+
+.dataset-meta-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* 描述区域固定高度 */
+.dataset-description {
+    height: 3.5rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+    margin-bottom: auto;
+}
+
+/* 统计信息区域 */
+.dataset-stats {
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+/* 优化网格在不同屏幕尺寸下的表现 */
+@media (min-width: 1200px) {
+    .dataset-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+    .dataset-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 991px) {
+    .dataset-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .dataset-card {
+        min-height: auto;
+    }
+}
+
+/* 图片容器统一高度 */
+.dataset-image-container {
+    height: 200px;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dataset-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.dataset-image-container:hover img {
+    transform: scale(1.05);
+}
+
+/* 卡片悬停效果优化 */
+.dataset-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* 按钮区域固定位置 */
+.dataset-actions {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* 管理后台侧边栏样式 */
+.admin-sidebar-card {
+    top: 1rem !important;
+    width: 100%; /* 确保卡片填满容器 */
+}
+
+/* 确保管理后台侧边栏列有固定宽度 */
+.admin-sidebar-column {
+    min-width: 280px !important;
+    max-width: 300px !important;
+    flex: 0 0 280px !important; /* 固定宽度，不伸缩 */
+}
+
+/* 兼容性样式：确保所有包含侧边栏的列都有固定宽度 */
+.container-fluid .row .col-md-2:has(.admin-sidebar-card),
+.container-fluid .row .col-md-3:has(.admin-sidebar-card),
+.container-fluid .row .col-md-2:has(.card .list-group),
+.container-fluid .row .col-md-3:has(.card .list-group) {
+    min-width: 280px;
+    max-width: 300px;
+    flex: 0 0 280px !important;
+}
+
+.admin-sidebar-card .list-group-item-action {
+    transition: all 0.2s ease-in-out;
+    border: none;
+    padding: 0.75rem 1rem;
+    white-space: nowrap; /* 防止文字换行 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-sidebar-card .list-group-item-action:hover {
+    background-color: #f8f9fa !important;
+    color: #495057;
+    transform: translateX(2px);
+}
+
+.admin-sidebar-card .list-group-item-action.active {
+    background-color: #007bff !important;
+    color: white !important;
+    border-color: #007bff;
+}
+
+.admin-sidebar-card .list-group-item-action.active i {
+    color: white !important;
+}
+
+
+/* 激活状态下的未读通知徽章样式 */
+.admin-sidebar-card .list-group-item-action.active .badge.bg-danger {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #dc3545 !important;
+    border: 1px solid #dc3545;
+}
+
+.admin-sidebar-header {
+    background-color: #f8f9fa !important;
+    border: none;
+    font-size: 0.75rem;
+}
+
+
+.admin-sidebar-card .list-group-item i {
+    width: 18px; /* 稍微增加图标宽度 */
+    text-align: center;
+    flex-shrink: 0; /* 防止图标被压缩 */
+}
+
+.admin-sidebar-card .list-group-item span {
+    flex: 1; /* 让文字占据剩余空间 */
+    min-width: 0; /* 允许文字区域收缩 */
+}
+
+/* 调整主内容区域，适应固定宽度的侧边栏 */
+.container-fluid .row .col-md-9,
+.container-fluid .row .col-md-10 {
+    flex: 1; /* 主内容区域填满剩余空间 */
+    min-width: 0; /* 允许内容区域收缩 */
+}
+
+/* 管理后台卡片样式 */
+.admin-stats-cards .admin-stat-card {
+    height: 140px;
+    transition: all 0.3s ease;
+}
+
+.admin-stats-cards .admin-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.admin-action-cards .admin-action-card {
+    height: 220px;
+    transition: all 0.3s ease;
+}
+
+.admin-action-cards .admin-action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.admin-action-cards .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.admin-action-cards .card-text {
+    flex: 1;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.admin-action-cards .d-flex {
+    margin-top: auto;
+}
+
+/* 统一卡片header样式 */
+.admin-action-cards .card-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-action-cards .card-header h5 i {
+    font-size: 1rem;
+}
+
+/* 响应式布局优化 - 统计卡片 */
+@media (min-width: 1200px) {
+    .admin-stats-cards .col-xl-2 {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
+    .admin-stats-cards .col-lg-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+    .admin-stats-cards .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+    
+    .admin-action-cards .col-lg-6 {
+        width: 100%;
+        flex: 0 0 100%;
+    }
+    
+    .admin-action-cards .admin-action-card {
+        height: auto;
+        min-height: 180px;
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-stats-cards .col-sm-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 575px) {
+    .admin-stats-cards [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .admin-stats-cards .admin-stat-card {
+        height: auto;
+        min-height: 120px;
+    }
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .admin-sidebar-card.sticky-top {
+        position: relative !important;
+        top: auto !important;
+    }
+    
+    .container-fluid .row .col-md-2,
+    .container-fluid .row .col-md-3 {
+        min-width: auto;
+        max-width: none;
+        flex: none !important;
+    }
+    
+    .container-fluid .row .col-md-9,
+    .container-fluid .row .col-md-10 {
+        flex: none;
+    }
+}
+
+/* 知识星球权限申请未读通知的红色圆形样式 */
+.unread-count-badge {
+    min-width: 20px !important;
+    height: 20px !important;
+    border-radius: 50% !important; /* 完全圆形 */
+    display: inline-flex !important; /* 改为inline-flex以适应不同布局 */
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    background-color: #dc3545 !important; /* 红色背景 */
+    color: white !important;
+    border: 1px solid #ffffff !important; /* 细一点的白色边框 */
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3) !important; /* 红色阴影 */
+    position: relative !important;
+}
+
+/* 激活状态下的圆形徽章样式调整 */
+.admin-sidebar-card .list-group-item-action.active .unread-count-badge {
+    background-color: #dc3545 !important; /* 保持红色 */
+    color: white !important;
+    border: 2px solid #dc3545 !important;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4) !important;
+}
+
+/* 悬停效果 */
+.admin-sidebar-card .list-group-item-action:hover .unread-count-badge {
+    transform: scale(1.1) !important;
+    transition: transform 0.2s ease !important;
+    box-shadow: 0 3px 8px rgba(220, 53, 69, 0.5) !important;
+}
+
+/* 导航栏中的特殊样式 */
+.navbar .unread-count-badge {
+    vertical-align: middle !important;
+    margin-left: 4px !important;
+}
+
+/* 下拉菜单中的特殊样式 */
+.dropdown-menu .unread-count-badge {
+    margin-left: 8px !important;
+    margin-right: 4px !important;
+}
+
+/* 确保在不同屏幕尺寸下都保持圆形 */
+@media (max-width: 768px) {
+    .unread-count-badge {
+        min-width: 18px !important;
+        height: 18px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* 动画效果：当有新通知时的脉冲效果 */
+@keyframes pulse-red {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 3px 6px rgba(220, 53, 69, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+}
+
+.unread-count-badge {
+    animation: pulse-red 2s infinite !important;
+}
+
+/* 数据集复选框样式 */
+.dataset-checkbox {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    backdrop-filter: blur(5px);
+    z-index: 5;
+}
+
+.dataset-checkbox .form-check-input {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid #667eea;
+    background-color: transparent;
+}
+
+.dataset-checkbox .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.dataset-checkbox .form-check-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* 管理员控制区域样式 */
+.admin-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.batch-actions {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+}
+
+.batch-actions:not([style*="display: none"]) {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 选中状态的数据集卡片高亮 */
+.dataset-card:has(.dataset-select:checked) {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25), 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-3px);
+}
+
+/* 删除确认模态框样式 */
+.modal-header {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+/* 批量操作按钮样式 */
+.btn-danger {
+    background: linear-gradient(90deg, #e53e3e 0%, #c53030 100%);
+    border: none;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(90deg, #c53030 0%, #9c2626 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(197, 48, 48, 0.4);
+}

@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+*.db-journal
+uploads/*
+!uploads/.gitkeep
+data_backups/
+.DS_Store

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}申请状态 - 数据集展示网站{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-star text-warning"></i>
+                        知识星球权限状态
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- 当前状态卡片 -->
+                    {% if is_planet_user %}
+                    <div class="alert alert-success">
+                        <h5><i class="fas fa-check-circle"></i> 恭喜！您已是知识星球用户</h5>
+                        <p class="mb-0">您现在可以下载所有数据集。感谢您的支持！</p>
+                        <div class="mt-2">
+                            <a href="{{ url_for('index') }}" class="btn btn-success">
+                                <i class="fas fa-download"></i> 去下载数据集
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-clock"></i> 您还不是知识星球用户</h5>
+                        <p class="mb-0">申请知识星球权限后，您将能够下载所有数据集。</p>
+                        <div class="mt-2">
+                            <a href="{{ url_for('planet.apply') }}" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> 立即申请
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- 申请历史 -->
+                    {% if applications %}
+                    <h5 class="mt-4 mb-3">申请历史</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>申请时间</th>
+                                    <th>申请理由</th>
+                                    <th>状态</th>
+                                    <th>审核时间</th>
+                                    <th>审核备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in applications %}
+                                <tr>
+                                    <td>{{ app.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <div style="max-width: 300px;">
+                                            {{ app.application_reason[:100] }}
+                                            {% if app.application_reason|length > 100 %}...{% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if app.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-clock"></i> 待审核
+                                        </span>
+                                        {% elif app.status == 'approved' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> 已通过
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times"></i> 已拒绝
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if app.reviewed_at %}
+                                        {{ app.reviewed_at.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if app.review_comment %}
+                                        <div style="max-width: 200px;">
+                                            {{ app.review_comment }}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- 操作按钮 -->
+                    <div class="mt-4 d-flex gap-2">
+                        {% if not is_planet_user %}
+                            {% set has_pending = applications|selectattr('status', 'equalto', 'pending')|list|length > 0 %}
+                            {% if not has_pending %}
+                            <a href="{{ url_for('planet.apply') }}" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                                {% if applications %}重新申请{% else %}立即申请{% endif %}
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-home"></i> 返回首页
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 帮助信息 -->
+            {% if not is_planet_user %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle text-info"></i> 常见问题</h6>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    申请需要多长时间审核？
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    通常在24-48小时内完成审核。如果超过48小时未收到回复，请联系管理员。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    申请被拒绝了怎么办？
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    请根据审核备注修改申请材料，确保提供清晰的购买截图和合理的申请理由，然后重新提交申请。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    知识星球权限有有效期吗？
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    一旦获得知识星球权限，即为永久有效，可以持续下载所有数据集。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,365 @@
+<!-- 此模板将被加载到模态框中 -->
+<div class="row">
+    <div class="col-md-6">
+        <h6><i class="fas fa-user"></i> 申请人信息</h6>
+        <table class="table table-sm">
+            <tr>
+                <th style="width: 30%;">用户名</th>
+                <td>{{ application.user.username }}</td>
+            </tr>
+            <tr>
+                <th>姓名</th>
+                <td>{{ application.user.full_name }}</td>
+            </tr>
+            <tr>
+                <th>邮箱</th>
+                <td>{{ application.user.email }}</td>
+            </tr>
+            <tr>
+                <th>注册时间</th>
+                <td>{{ application.user.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            <tr>
+                <th>用户状态</th>
+                <td>
+                    {% if application.user.is_active %}
+                    <span class="badge bg-success">活跃</span>
+                    {% else %}
+                    <span class="badge bg-secondary">已禁用</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="col-md-6">
+        <h6><i class="fas fa-file-alt"></i> 申请信息</h6>
+        <table class="table table-sm">
+            <tr>
+                <th style="width: 30%;">申请时间</th>
+                <td>{{ application.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            <tr>
+                <th>当前状态</th>
+                <td>
+                    {% if application.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-clock"></i> 待审核
+                    </span>
+                    {% elif application.status == 'approved' %}
+                    <span class="badge bg-success">
+                        <i class="fas fa-check"></i> 已通过
+                    </span>
+                    {% else %}
+                    <span class="badge bg-danger">
+                        <i class="fas fa-times"></i> 已拒绝
+                    </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% if application.reviewed_at %}
+            <tr>
+                <th>审核时间</th>
+                <td>{{ application.reviewed_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            <tr>
+                <th>审核人</th>
+                <td>
+                    {% if application.reviewer %}
+                    {{ application.reviewer.username }}
+                    {% else %}
+                    <span class="text-muted">未知</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <h6><i class="fas fa-comment-alt"></i> 申请理由</h6>
+        <div class="card">
+            <div class="card-body">
+                <p class="mb-0">{{ application.application_reason }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Phase 5: OCR 识别信息 -->
+<div class="row mt-3">
+    <div class="col-12">
+        <h6><i class="fas fa-robot"></i> OCR 识别信息</h6>
+        {% if application.ocr_extracted_date %}
+        <div class="card border-info">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>识别的到期时间：</strong>
+                            <span class="text-primary fw-bold">
+                                {{ application.ocr_extracted_date.strftime('%Y年%m月%d日') }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-0">
+                            <strong>会员时长：</strong>
+                            <span class="badge bg-success">
+                                {{ application.membership_duration }} 个月
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            未进行 OCR 识别或识别失败
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <h6><i class="fas fa-image"></i> 购买截图</h6>
+        {% if application.screenshot_filename %}
+        <div class="text-center">
+            <img src="{{ url_for('uploaded_file', filename='screenshots/' + application.screenshot_filename) }}"
+                alt="购买截图" class="img-fluid border rounded" style="max-height: 400px; cursor: pointer;"
+                onclick="openImageModal(this.src)">
+            <p class="text-muted mt-2">点击图片查看大图</p>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            未找到购买截图
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if application.review_comment %}
+<div class="row mt-3">
+    <div class="col-12">
+        <h6><i class="fas fa-sticky-note"></i> 审核备注</h6>
+        <div class="card">
+            <div class="card-body">
+                <p class="mb-0">{{ application.review_comment }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Phase 5: 到期时间设置 -->
+{% if application.status == 'pending' %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h6><i class="fas fa-calendar-alt"></i> 权限到期时间设置</h6>
+        <div class="card border-warning">
+            <div class="card-body">
+                <!-- 快捷时长按钮 -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">快捷时长：</label>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="setExpiryMonths(1)">1个月</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="setExpiryMonths(3)">3个月</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="setExpiryMonths(6)">6个月</button>
+                        <button type="button" class="btn btn-outline-primary"
+                            onclick="setExpiryMonths(12)">12个月</button>
+                        {% if application.membership_duration %}
+                        <button type="button" class="btn btn-outline-success"
+                            onclick="setExpiryMonths({{ application.membership_duration }})">
+                            <i class="fas fa-magic"></i> 使用OCR结果 ({{ application.membership_duration }}个月)
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- 手动输入到期时间 -->
+                <div class="mb-3">
+                    <label for="customExpiryDate" class="form-label fw-bold">
+                        或手动设置到期时间：
+                    </label>
+                    <input type="datetime-local" class="form-control" id="customExpiryDate" name="custom_expiry_date">
+                    <small class="text-muted">
+                        默认从当前时间计算，也可手动指定具体时间
+                    </small>
+                </div>
+
+                <!-- 预览 -->
+                <div class="alert alert-info mb-0" id="expiryPreview" style="display:none;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>预计到期时间：</strong>
+                    <span id="expiryPreviewText"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 操作按钮 -->
+{% if application.status == 'pending' %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-success" onclick="reviewApplication({{ application.id }}, 'approve')">
+                <i class="fas fa-check"></i> 通过申请
+            </button>
+            <button type="button" class="btn btn-danger" onclick="showRejectModalFromDetail({{ application.id }})">
+                <i class="fas fa-times"></i> 拒绝申请
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Phase 5: JavaScript 功能 -->
+<script>
+    // 设置到期时间（按月数）
+    function setExpiryMonths(months) {
+        const now = new Date();
+        const expiryDate = new Date(now);
+        expiryDate.setMonth(expiryDate.getMonth() + months);
+
+        // 格式化为 datetime-local 格式 (YYYY-MM-DDTHH:mm)
+        const year = expiryDate.getFullYear();
+        const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+        const day = String(expiryDate.getDate()).padStart(2, '0');
+        const hours = String(expiryDate.getHours()).padStart(2, '0');
+        const minutes = String(expiryDate.getMinutes()).padStart(2, '0');
+        const formatted = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        const input = document.getElementById('customExpiryDate');
+        if (input) {
+            input.value = formatted;
+            updateExpiryPreview(expiryDate);
+        }
+    }
+
+    // 手动输入时更新预览
+    const expiryInput = document.getElementById('customExpiryDate');
+    if (expiryInput) {
+        expiryInput.addEventListener('change', function () {
+            if (this.value) {
+                const expiryDate = new Date(this.value);
+                updateExpiryPreview(expiryDate);
+            } else {
+                document.getElementById('expiryPreview').style.display = 'none';
+            }
+        });
+    }
+
+    // 更新到期时间预览
+    function updateExpiryPreview(date) {
+        const preview = document.getElementById('expiryPreview');
+        const previewText = document.getElementById('expiryPreviewText');
+
+        if (date && !isNaN(date.getTime())) {
+            const formatted = date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            previewText.textContent = formatted;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    // 修改审核函数，添加到期时间验证
+    function reviewApplication(appId, action) {
+        // 如果是通过申请，验证到期时间
+        if (action === 'approve') {
+            const expiryDate = document.getElementById('customExpiryDate')?.value;
+            if (!expiryDate) {
+                alert('请先设置权限到期时间！\n\n您可以：\n1. 使用快捷时长按钮（1/3/6/12个月）\n2. 点击"使用OCR结果"（如果有）\n3. 手动输入到期时间');
+                return;
+            }
+
+            // 验证是否为未来时间
+            const expiry = new Date(expiryDate);
+            const now = new Date();
+            if (expiry <= now) {
+                alert('到期时间必须是未来时间！');
+                return;
+            }
+        }
+
+        // 构建表单数据
+        const formData = new FormData();
+        formData.append('action', action);
+
+        if (action === 'approve') {
+            formData.append('expiry_date', document.getElementById('customExpiryDate').value);
+        } else if (action === 'reject') {
+            const comment = prompt('请输入拒绝理由：');
+            if (!comment) {
+                return;
+            }
+            formData.append('comment', comment);
+        }
+
+        // 发送审核请求
+        fetch(`/planet/admin/applications/${appId}/review`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('操作失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('网络错误：' + error);
+            });
+    }
+
+    // 页面加载时，如果OCR识别了到期时间，自动填充
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if application.ocr_extracted_date and application.status == 'pending' %}
+        // 自动使用OCR识别的到期时间
+        const ocrDate = new Date('{{ application.ocr_extracted_date.strftime("%Y-%m-%d") }}');
+        // 设置为中午12:00，避免时区问题
+        ocrDate.setHours(12, 0, 0, 0);
+
+        const year = ocrDate.getFullYear();
+        const month = String(ocrDate.getMonth() + 1).padStart(2, '0');
+        const day = String(ocrDate.getDate()).padStart(2, '0');
+        const formatted = `${year}-${month}-${day}T12:00`;
+
+        const input = document.getElementById('customExpiryDate');
+        if (input) {
+            input.value = formatted;
+            updateExpiryPreview(ocrDate);
+            // 显示提示
+            const preview = document.getElementById('expiryPreview');
+            if (preview) {
+                preview.classList.add('alert-success');
+                preview.classList.remove('alert-info');
+                const icon = preview.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-check-circle';
+                }
+                const previewText = document.getElementById('expiryPreviewText');
+                if (previewText) {
+                    previewText.innerHTML = formatted.replace('T', ' ') + ' (自动填充OCR识别结果，可修改)';
+                }
+            }
+        }
+        {% endif %}
+    });
+</script>

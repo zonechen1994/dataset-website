@@ -1,0 +1,31 @@
+{% extends "base_enhanced.html" %}
+
+{% block title %}{% block admin_title %}管理后台{% endblock %} - 数据集管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 统一使用侧边栏组件 -->
+        <div class="col-md-3 admin-sidebar-column">
+            {% include 'admin/sidebar.html' %}
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="col-md-9">
+            {% block admin_content %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                欢迎使用管理后台！请在左侧菜单中选择要管理的功能。
+            </div>
+            {% endblock %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- 智能未读通知管理 -->
+<script src="{{ url_for('static', filename='js/notification_auto_read.js') }}"></script>
+{% endblock %}
